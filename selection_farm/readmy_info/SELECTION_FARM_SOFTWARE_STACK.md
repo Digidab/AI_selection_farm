@@ -73,6 +73,34 @@ sudo apt install -y \
   python3-dev
 ```
 
+Status check (2026-07-07):
+
+```text
+git                [installed]
+curl               [installed]
+wget               [installed]
+make               [installed]
+tree               [installed]
+htop               [missing]
+btop               [installed]
+tmux               [missing]
+jq                 [missing]
+yq                 [missing]
+nano               [installed]
+vim                [missing]
+unzip              [installed]
+ca-certificates    [installed]
+gnupg              [installed]
+lsb-release        [installed]
+build-essential    [installed]
+pkg-config         [missing]
+cmake              [missing]
+python3            [installed]
+python3-venv       [installed]
+python3-pip        [installed]
+python3-dev        [installed]
+```
+
 ## Purpose
 
 | Package | Purpose |
@@ -148,6 +176,13 @@ docker-ce-cli
 containerd.io
 docker-buildx-plugin
 docker-compose-plugin
+```
+
+Status check (2026-07-07):
+
+```text
+Docker Engine       [installed — via docker.io package, not docker-ce; v26.1.5]
+docker compose CLI  [missing — compose plugin not installed; managed via Portainer instead]
 ```
 
 Docker files are stored under:
@@ -943,6 +978,27 @@ numpy
 pandas
 scikit-learn
 psutil
+```
+
+Status check (2026-07-07): installed into `venv_ai_selection_farm` —
+
+```text
+pydantic 2.13.4          [installed]
+pydantic-settings 2.14.2 [installed]
+httpx 0.28.1             [installed]
+orjson 3.11.9            [installed]
+psycopg[binary] 3.3.4    [installed]
+pgvector 0.5.0           [installed]
+loguru 0.7.3             [installed]
+rich 15.0.0              [installed]
+tenacity 9.1.4           [installed]
+pytest 9.1.1             [installed]
+ruff 0.15.20             [installed]
+black 26.5.1             [installed]
+numpy 2.5.1              [installed]
+pandas 3.0.3             [installed]
+scikit-learn 1.9.0       [installed]
+psutil 7.2.2             [installed]
 ```
 
 This is enough for:
