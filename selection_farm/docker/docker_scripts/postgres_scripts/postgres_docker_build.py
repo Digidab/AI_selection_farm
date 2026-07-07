@@ -4,7 +4,7 @@ Postgres Docker Build Script - Selection Farm
 Opens terminal and builds/starts only the postgres container.
 
 Data directory is a BIND MOUNT (not a named volume):
-    docker/docker_scripts/postgres_scripts/pgdata/
+    selection_farm/db/postgres_volume/
 This directory is created here if missing, before the container starts,
 so Postgres data lives on the host filesystem and survives container
 removal, image removal, and `docker volume prune`.
@@ -20,7 +20,7 @@ script_dir = Path(__file__).resolve().parent
 docker_dir = script_dir.parent.parent  # selection_farm/docker
 compose_file = docker_dir / "docker-compose.yml"
 env_file = docker_dir / ".env"
-pgdata_dir = script_dir / "pgdata"
+pgdata_dir = docker_dir.parent / "db" / "postgres_volume"  # selection_farm/db/postgres_volume
 
 
 def main():

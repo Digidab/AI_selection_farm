@@ -10,5 +10,5 @@ __pycache__/
 *.dump
 *.sql.gz
 *.bak
-pgdata/
+postgres_volume/
 **/backups/

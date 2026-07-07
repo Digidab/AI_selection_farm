@@ -4,8 +4,8 @@ Postgres Docker Down Script - Selection Farm
 Opens terminal and stops/removes ONLY the postgres container + its image.
 IMPORTANT: KEEPS PORTAINER AND ALL OTHER CONTAINERS UNTOUCHED!
 
-The pgdata/ directory next to this script is a BIND MOUNT, not a named
-docker volume. This script never deletes it, and no docker command here
+The db/postgres_volume/ directory is a BIND MOUNT, not a named docker
+volume. This script never deletes it, and no docker command here
 (compose down, rm, rmi) is able to touch it either way - only an explicit
 `rm -rf` on that path would destroy the data.
 """
@@ -21,7 +21,7 @@ ALLOWED_CONTAINERS = [CONTAINER_NAME]
 script_dir = Path(__file__).resolve().parent
 docker_dir = script_dir.parent.parent  # selection_farm/docker
 env_file = docker_dir / ".env"
-pgdata_dir = script_dir / "pgdata"
+pgdata_dir = docker_dir.parent / "db" / "postgres_volume"  # selection_farm/db/postgres_volume
 
 
 def main():
