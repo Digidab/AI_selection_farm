@@ -273,6 +273,28 @@ Resource rule:
 7B+        = rare benchmark only
 ```
 
+Status check (2026-07-07):
+
+```text
+Container      [running — name: selection_farm_ollama, standalone (not in docker-compose.yml)]
+Image used     [ollama/ollama:latest]
+Reachable at   [http://localhost:11434 on host, http://host.docker.internal:11434 from other containers]
+Models pulled  [qwen3:0.6b (522 MB) — the rest of the recommended list not pulled yet]
+```
+
+Data volume (bind mount, not a named docker volume):
+
+```text
+Name:     ollama_volume
+Location: selection_farm/db/ollama_volume/
+```
+
+Survives full container and image removal, git-ignored (`ollama_volume/` in root `.gitignore`).
+Managed via `docker/docker_scripts/ollama_scripts/ollama_docker_build.py` and
+`ollama_docker_down.py` — same pattern as the postgres scripts, whitelist-only teardown,
+Portainer and other containers untouched. Verified end-to-end (pull model → remove
+container+image → rebuild → model still present, no re-download).
+
 ## PostgreSQL + pgvector
 
 Role:
