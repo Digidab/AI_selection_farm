@@ -1,0 +1,14 @@
+[project]
+name = "selection-farm"
+version = "0.1.0"
+description = "Local model selection and breeding farm"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 100
+
+[tool.black]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

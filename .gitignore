@@ -1,0 +1,14 @@
+# Python virtual environment
+venv_ai_selection_farm/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Database dumps / backups (heavy, regenerable)
+*.dump
+*.sql.gz
+*.bak
+pgdata/
+**/backups/

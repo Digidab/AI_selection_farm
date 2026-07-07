@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ../db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  selector:
+    build:
+      context: ..
+      dockerfile: docker/selector/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: .env
+
+  bereiter:
+    build:
+      context: ..
+      dockerfile: docker/bereiter/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: .env
+
+  trainer:
+    build:
+      context: ..
+      dockerfile: docker/trainer/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: .env
+
+volumes:
+  pgdata:

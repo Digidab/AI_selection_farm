@@ -1,0 +1,67 @@
+{
+  "system_name": "AI_selection_farm_ID_Registry",
+  "version": "1.0.0",
+  "description": "Фактическое состояние счётчиков: последний выданный номер для каждого full_prefix. Это единственный источник истины для генерации следующего ID — id_directory.json описывает только значение префиксов и не меняется при выпуске новых ID.",
+  "counters": {
+    "PR00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "MO00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "EP00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "GE00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "PE00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "RU00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "DA00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "TC00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "SV00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "BR00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    }
+  }
+}

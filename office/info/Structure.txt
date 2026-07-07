@@ -1,0 +1,175 @@
+selection_farm/
+├── 📄 .gitignore
+├── 📁 .vscode/
+│   ├── 📄 launch.json
+│   ├── 📄 settings.json
+│   └── 📄 tasks.json
+├── 📄 Makefile
+├── 📄 README.md
+├── 📁 configs/
+│   ├── 📄 README.md
+│   ├── 📁 bereiter/
+│   │   └── 📄 trial_config_v001.yaml
+│   ├── 📁 datasets/
+│   │   └── 📄 dataset_profiles.yaml
+│   ├── 📁 models/
+│   │   └── 📄 model_profiles.yaml
+│   ├── 📁 selector/
+│   │   └── 📄 selector_v001.yaml
+│   └── 📁 trainer/
+│       └── 📄 lora_train_v001.yaml
+├── 📁 datasets/
+│   ├── 📁 eval/
+│   │   └── 📄 eval_card.md
+│   ├── 📁 golden/
+│   │   ├── 📄 checksums.txt
+│   │   └── 📄 dataset_card_v001.md
+│   ├── 📁 raw/
+│   │   ├── 📄 README.md
+│   │   ├── 📁 source_data/
+│   │   │   └── 📄 .gitkeep
+│   │   └── 📄 tasks.jsonl
+│   └── 📁 rejected/
+│       ├── 📄 rejection_stats.json
+│       └── 📄 rejection_summary.md
+├── 📁 db/
+│   ├── 📄 README.md
+│   ├── 📄 init.sql
+│   ├── 📁 migrations/
+│   │   ├── 📄 001_init.sql
+│   │   ├── 📄 002_add_pgvector.sql
+│   │   └── 📄 003_model_registry.sql
+│   └── 📄 schema.sql
+├── 📁 docker/
+│   ├── 📄 .env.example
+│   ├── 📁 bereiter/
+│   │   └── 📄 Dockerfile
+│   ├── 📄 docker-compose.yml
+│   ├── 📁 postgres/
+│   │   └── 📄 init.sql
+│   ├── 📁 selector/
+│   │   └── 📄 Dockerfile
+│   └── 📁 trainer/
+│       └── 📄 Dockerfile
+├── 📁 logs/
+│   ├── 📁 archived/
+│   │   └── 📄 .gitkeep
+│   ├── 📄 bereiter.log
+│   ├── 📁 docker/
+│   │   └── 📄 .gitkeep
+│   ├── 📄 selector.log
+│   └── 📄 trainer.log
+├── 📄 pyproject.toml
+├── 📁 scripts/
+│   ├── 📄 README.md
+│   ├── 📄 backup_studbook.sh
+│   ├── 📄 cleanup_logs.sh
+│   ├── 📄 create_project_tree.sh
+│   ├── 📄 export_golden_dataset.sh
+│   ├── 📄 run_bereiter.sh
+│   ├── 📄 run_selector.sh
+│   └── 📄 run_trainer.sh
+├── 📁 services/
+│   ├── 📁 bereiter/
+│   │   ├── 📄 README.md
+│   │   ├── 📁 app/
+│   │   │   ├── 📄 __init__.py
+│   │   │   ├── 📄 config.py
+│   │   │   ├── 📄 main.py
+│   │   │   ├── 📄 metrics.py
+│   │   │   ├── 📄 report_writer.py
+│   │   │   ├── 📄 resource_monitor.py
+│   │   │   └── 📄 trial_runner.py
+│   │   └── 📄 requirements.txt
+│   ├── 📁 selector/
+│   │   ├── 📄 README.md
+│   │   ├── 📁 app/
+│   │   │   ├── 📄 __init__.py
+│   │   │   ├── 📄 config.py
+│   │   │   ├── 📄 dataset_writer.py
+│   │   │   ├── 📄 db.py
+│   │   │   ├── 📄 embedding_client.py
+│   │   │   ├── 📄 logging_config.py
+│   │   │   ├── 📄 main.py
+│   │   │   ├── 📄 ollama_client.py
+│   │   │   ├── 📄 schemas.py
+│   │   │   └── 📄 validators.py
+│   │   └── 📄 requirements.txt
+│   └── 📁 trainer/
+│       ├── 📄 README.md
+│       ├── 📁 app/
+│       │   ├── 📄 __init__.py
+│       │   ├── 📄 checkpoint_manager.py
+│       │   ├── 📄 config.py
+│       │   ├── 📄 export_model.py
+│       │   ├── 📄 main.py
+│       │   ├── 📄 train_llm_lora.py
+│       │   └── 📄 train_ml_model.py
+│       └── 📄 requirements.txt
+├── 📁 stable/
+│   ├── 📁 archived_models/
+│   │   ├── 📄 archive_index.yaml
+│   │   └── 📁 archived_reports/
+│   │       └── 📄 .gitkeep
+│   ├── 📁 breeding_models/
+│   │   ├── 📄 approved_breeding_models.yaml
+│   │   ├── 📁 candidates/
+│   │   │   └── 📄 .gitkeep
+│   │   └── 📄 notes.md
+│   ├── 📁 hybrid_models_stall/
+│   │   └── 📄 README.md
+│   ├── 📁 llm_models_stall/
+│   │   └── 📄 README.md
+│   ├── 📁 ml_models_stall/
+│   │   └── 📄 README.md
+│   ├── 📁 rejected_models/
+│   │   ├── 📁 failure_reports/
+│   │   │   └── 📄 .gitkeep
+│   │   ├── 📄 notes.md
+│   │   └── 📄 rejected_registry.yaml
+│   └── 📁 worker_models/
+│       ├── 📁 production_ready/
+│       │   └── 📄 .gitkeep
+│       ├── 📁 staging/
+│       │   └── 📄 .gitkeep
+│       └── 📄 worker_registry.yaml
+├── 📁 studbook/
+│   ├── 📁 breeding_decisions/
+│   │   ├── 📄 README.md
+│   │   └── 📄 breeding_decisions.jsonl
+│   ├── 📁 generation_reports/
+│   │   └── 📄 README.md
+│   ├── 📁 model_lineage/
+│   │   ├── 📄 lineage.yaml
+│   │   ├── 📄 lineage_events.jsonl
+│   │   └── 📄 lineage_graph.mmd
+│   ├── 📁 model_registry/
+│   │   ├── 📁 models/
+│   │   │   └── 📄 .gitkeep
+│   │   ├── 📄 registry.jsonl
+│   │   └── 📄 registry.yaml
+│   ├── 📁 rejected_reports/
+│   │   ├── 📄 README.md
+│   │   └── 📄 rejected_models.jsonl
+│   ├── 📁 templates/
+│   │   ├── 📄 breeding_decision_template.md
+│   │   ├── 📄 generation_report_template.md
+│   │   ├── 📄 model_card_template.md
+│   │   ├── 📄 model_passport_template.yaml
+│   │   ├── 📄 rejection_report_template.md
+│   │   └── 📄 worker_admission_template.md
+│   └── 📁 worker_admissions/
+│       ├── 📄 README.md
+│       └── 📄 worker_admissions.jsonl
+└── 📁 tests/
+    ├── 📄 README.md
+    ├── 📁 integration/
+    │   ├── 📄 test_ollama_connection.py
+    │   ├── 📄 test_pgvector_dedup.py
+    │   └── 📄 test_postgres_connection.py
+    ├── 📁 regression/
+    │   └── 📄 test_generation_regression.py
+    └── 📁 unit/
+        ├── 📄 test_dataset_writer.py
+        ├── 📄 test_schemas.py
+        └── 📄 test_selector_validators.py

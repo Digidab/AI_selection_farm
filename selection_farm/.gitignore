@@ -1,0 +1,16 @@
+docker/.env
+logs/*
+!logs/docker/
+!logs/archived/
+*.log
+__pycache__/
+.venv/
+venv_ai_selection_farm/
+*.pyc
+datasets/raw/private/
+datasets/rejected/*.jsonl
+stable/**/large_weights/
+data/
+*.gguf
+*.safetensors
+*.bin

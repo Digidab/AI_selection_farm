@@ -1,0 +1,97 @@
+{
+  "system_name": "AI_selection_farm_ID_Registry",
+  "version": "1.0.0",
+  "description": "Справочник соответствия префиксов и абстракций для генерации ID",
+  "registry": {
+    "PR": [
+      {
+        "index": "00",
+        "full_prefix": "PR00",
+        "entity_name_ru": "Процессы",
+        "entity_name_en": "Processes",
+        "description": "Идентификаторы для отслеживания системных и вычислительных процессов"
+      }
+    ],
+    "MO": [
+      {
+        "index": "00",
+        "full_prefix": "MO00",
+        "entity_name_ru": "Модели",
+        "entity_name_en": "Models",
+        "description": "Идентификаторы архитектур и весов нейросетевых моделей"
+      }
+    ],
+    "EP": [
+      {
+        "index": "00",
+        "full_prefix": "EP00",
+        "entity_name_ru": "Эпохи",
+        "entity_name_en": "Epochs",
+        "description": "Идентификаторы эпох обучения моделей"
+      }
+    ],
+    "GE": [
+      {
+        "index": "00",
+        "full_prefix": "GE00",
+        "entity_name_ru": "Поколения",
+        "entity_name_en": "Generations",
+        "description": "Идентификаторы поколений в рамках отбора (селекции)"
+      }
+    ],
+    "PE": [
+      {
+        "index": "00",
+        "full_prefix": "PE00",
+        "entity_name_ru": "Родословные",
+        "entity_name_en": "Pedigree",
+        "description": "Идентификаторы генеалогических древ и родословных линий"
+      }
+    ],
+    "RU": [
+      {
+        "index": "00",
+        "full_prefix": "RU00",
+        "entity_name_ru": "Запуски",
+        "entity_name_en": "Runs",
+        "description": "Идентификаторы запусков процессов selector/bereiter/trainer (run_id)"
+      }
+    ],
+    "DA": [
+      {
+        "index": "00",
+        "full_prefix": "DA00",
+        "entity_name_ru": "Датасеты",
+        "entity_name_en": "Datasets",
+        "description": "Идентификаторы датасетов (raw/golden/rejected/eval), dataset_id"
+      }
+    ],
+    "TC": [
+      {
+        "index": "00",
+        "full_prefix": "TC00",
+        "entity_name_ru": "Конфигурации обучения",
+        "entity_name_en": "Training Configs",
+        "description": "Идентификаторы конфигураций обучения/fine-tuning, training_config_id"
+      }
+    ],
+    "SV": [
+      {
+        "index": "00",
+        "full_prefix": "SV00",
+        "entity_name_ru": "Версии селектора",
+        "entity_name_en": "Selector Versions",
+        "description": "Идентификаторы версий Selector, selector_version"
+      }
+    ],
+    "BR": [
+      {
+        "index": "00",
+        "full_prefix": "BR00",
+        "entity_name_ru": "Отчёты Bereiter",
+        "entity_name_en": "Bereiter Reports",
+        "description": "Идентификаторы отчётов об испытаниях моделей, bereiter_report_id"
+      }
+    ]
+  }
+}

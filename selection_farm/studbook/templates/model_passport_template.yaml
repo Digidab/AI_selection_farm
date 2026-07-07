@@ -1,0 +1,15 @@
+model_id:
+model_type:        # llm | ml | hybrid
+base_model:
+generation:
+status:            # raw | trained | tested | breeding | worker | rejected
+resource_class:    # low | medium | high
+allowed_for_pipeline: false
+allowed_for_breeding: false
+dataset_id:
+training_config_id:
+selector_version:
+bereiter_report_id:
+eval_score:
+resource_usage:
+decision_reason:

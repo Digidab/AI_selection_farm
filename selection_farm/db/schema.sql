@@ -1,0 +1,1 @@
+-- Current full schema snapshot (kept in sync with migrations/).
