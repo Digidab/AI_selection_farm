@@ -11,4 +11,5 @@ __pycache__/
 *.sql.gz
 *.bak
 postgres_volume/
+ollama_volume/
 **/backups/
