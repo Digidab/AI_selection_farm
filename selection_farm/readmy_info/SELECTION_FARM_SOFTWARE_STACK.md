@@ -298,6 +298,29 @@ Alternative if needed:
 pgvector/pgvector:pg16
 ```
 
+Status check (2026-07-07):
+
+```text
+Container        [running — name: selection_farm_postgres]
+Image used       [ankane/pgvector:latest — not pgvector/pgvector:pg16-trixie as listed above]
+Extension vector [installed — v0.5.1, CREATE EXTENSION applied manually]
+Tables/schema    [NOT defined yet — db/schema.sql and db/migrations/*.sql are still empty
+                  placeholder comments; no real tables exist in the database yet]
+```
+
+Data volume (bind mount, not a named docker volume):
+
+```text
+Name:     postgres_volume
+Location: selection_farm/db/postgres_volume/
+```
+
+This directory holds the real Postgres data files on the host filesystem (owned by uid 999
+inside the container, mode 0700 — not readable by the host user, this is expected). It survives
+full container and image removal (`postgres_docker_down.py`) and is git-ignored (see root
+`.gitignore`, pattern `postgres_volume/`). Managed via
+`docker/docker_scripts/postgres_scripts/postgres_docker_build.py` and `postgres_docker_down.py`.
+
 ## Selector container
 
 Role:
