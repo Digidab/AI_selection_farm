@@ -81,20 +81,20 @@ curl               [installed]
 wget               [installed]
 make               [installed]
 tree               [installed]
-htop               [missing]
+htop               [skipped — using btop instead, covers the same role]
 btop               [installed]
-tmux               [missing]
-jq                 [missing]
-yq                 [missing]
+tmux               [installed]
+jq                 [installed]
+yq                 [installed]
 nano               [installed]
-vim                [missing]
+vim                [not needed — not used]
 unzip              [installed]
 ca-certificates    [installed]
 gnupg              [installed]
 lsb-release        [installed]
 build-essential    [installed]
-pkg-config         [missing]
-cmake              [missing]
+pkg-config         [installed]
+cmake              [installed]
 python3            [installed]
 python3-venv       [installed]
 python3-pip        [installed]
@@ -144,14 +144,14 @@ project refactoring
 Python                                   [installed]
 Pylance                                  [installed]
 Ruff                                     [installed]
-Black Formatter                         [installed]
+Black Formatter                          [installed]
 Docker                                   [not needed — using Portainer instead]
 YAML                                     [installed]
 SQLTools
 SQLTools PostgreSQL/Cockroach Driver
-Makefile Tools                          [installed]
-GitLens
-Markdown All in One
+Makefile Tools                           [installed]
+GitLens                                  [installed] 
+Markdown All in One                      [installed]
 ```
 
 ## Optional VS Code extensions
@@ -182,8 +182,17 @@ Status check (2026-07-07):
 
 ```text
 Docker Engine       [installed — via docker.io package, not docker-ce; v26.1.5]
-docker compose CLI  [missing — compose plugin not installed; managed via Portainer instead]
+docker-cli          [installed — Debian equivalent of docker-ce-cli]
+containerd          [installed — bundled with docker.io, no separate containerd.io package]
+docker buildx       [installed — via docker-buildx package, not docker-buildx-plugin; v0.13.1]
+docker compose CLI  [installed — via docker-compose package (Debian name), not docker-compose-plugin; v2.26.1]
 ```
+
+Note: the official `docker-ce`/`docker-ce-cli`/`containerd.io`/`docker-buildx-plugin`/`docker-compose-plugin`
+package names above are from Docker Inc.'s own repo. Debian ships equivalents under different
+package names (`docker.io`, `docker-cli`, `docker-buildx`, `docker-compose`) — do not install both
+sets, they conflict. Day-to-day container management is done via Portainer (GUI); `docker compose`
+CLI was installed specifically so the coding agent can bring up/tear down/inspect the stack directly.
 
 Docker files are stored under:
 
