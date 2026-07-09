@@ -11,6 +11,8 @@ datasets/raw/private/
 datasets/rejected/*.jsonl
 stable/**/large_weights/
 data/
+db/postgres_volume/
+db/ollama_volume/
 *.gguf
 *.safetensors
 *.bin
