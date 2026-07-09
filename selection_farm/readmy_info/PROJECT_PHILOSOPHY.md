@@ -235,22 +235,24 @@ Minimum fields:
 
 ```text
 model_id
+model_name
 model_type
 base_model
+resource_class
 generation
 parent_model_id
-dataset_id
-training_config_id
-selector_version
-bereiter_report_id
-eval_score
-latency
-memory_usage
 status
-decision_reason
 allowed_for_pipeline
 allowed_for_breeding
+created_at
+updated_at
+metadata
 ```
+
+Facts from a concrete run (`dataset_id`, `training_config_id`, `selector_version`, metrics,
+latency, resource usage) belong to runtime records and generated reports, not to the model passport.
+Admission reasons for `worker_model` / `breeding_model` live in `studbook/breeding_decisions/` and
+`studbook/worker_admissions/`.
 
 The model passport belongs in:
 

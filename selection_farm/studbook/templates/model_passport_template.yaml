@@ -1,15 +1,22 @@
-model_id:
-model_type:        # llm | ml | hybrid
-base_model:
-generation:
-status:            # raw | trained | tested | breeding | worker | rejected
-resource_class:    # low | medium | high
+# Единая форма профиля — общая и для LLM, и для классических ML-моделей.
+# Поля, не применимые к конкретному model_type, оставлять пустыми (null), а не удалять —
+# так профиль остаётся одной и той же структуры для любой модели фермы.
+#
+# Поля вроде dataset_id/training_config_id/selector_version/eval_score/bereiter_report_id
+# сюда намеренно не входят — это факты конкретного запуска (farm.runs/farm.samples) или
+# будущих таблиц Bereiter, а не факты самой модели (см. database_guide.md §9.1, §4.1).
+# decision_reason тоже не здесь — он живёт в studbook/breeding_decisions/ и worker_admissions/.
+
+model_id:                  # MO-префикс из scripts/id_generator/core.py, неизменен
+model_name:
+model_type:                 # llm | ml | hybrid | embedding | judge | reward
+base_model:                 # например qwen3:0.6b; null для ML-моделей, обученных с нуля
+resource_class:              # 0.6b_1b | 1.5b_1.7b | 3b | 4b | 7b_plus | classical_ml
+generation:                   # int, номер поколения разведения; null пока GE не активирован
+parent_model_id:               # ссылка на другой model_id; null пока PE (lineage) не активирован
+status:                          # raw_candidate | trained_candidate | tested_candidate | breeding_model | worker_model | rejected_model | archived_model
 allowed_for_pipeline: false
 allowed_for_breeding: false
-dataset_id:
-training_config_id:
-selector_version:
-bereiter_report_id:
-eval_score:
-resource_usage:
-decision_reason:
+created_at:
+updated_at:
+metadata: {}                       # эскейпхэтч для редко запрашиваемых деталей — не прятать сюда поля, которые реально фильтруются/джойнятся

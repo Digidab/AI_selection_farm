@@ -1,21 +1,45 @@
 {
   "system_name": "AI_selection_farm_ID_Registry",
-  "version": "1.0.0",
-  "description": "Фактическое состояние счётчиков: последний выданный номер для каждого full_prefix. Это единственный источник истины для генерации следующего ID — id_directory.json описывает только значение префиксов и не меняется при выпуске новых ID.",
+  "version": "2.0.0",
+  "description": "Фактическое состояние счётчиков: последний выданный номер для каждого full_prefix. Это единственный источник истины для генерации следующего ID — id_directory.json описывает только значение префиксов и не меняется при выпуске новых ID. Записи для 'deferred' префиксов присутствуют заранее (все null), чтобы активация в будущем требовала только смены status в id_directory.json, без правки этого файла.",
   "counters": {
-    "PR00": {
-      "last_issued": null,
-      "counter_width": 4,
-      "last_full_id": null,
-      "updated_at": null
-    },
     "MO00": {
       "last_issued": null,
       "counter_width": 4,
       "last_full_id": null,
       "updated_at": null
     },
-    "EP00": {
+    "RU00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "TA00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "GN00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "VA00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "SA00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "EM00": {
       "last_issued": null,
       "counter_width": 4,
       "last_full_id": null,
@@ -33,31 +57,13 @@
       "last_full_id": null,
       "updated_at": null
     },
-    "RU00": {
-      "last_issued": null,
-      "counter_width": 4,
-      "last_full_id": null,
-      "updated_at": null
-    },
-    "DA00": {
-      "last_issued": null,
-      "counter_width": 4,
-      "last_full_id": null,
-      "updated_at": null
-    },
-    "TC00": {
-      "last_issued": null,
-      "counter_width": 4,
-      "last_full_id": null,
-      "updated_at": null
-    },
-    "SV00": {
-      "last_issued": null,
-      "counter_width": 4,
-      "last_full_id": null,
-      "updated_at": null
-    },
     "BR00": {
+      "last_issued": null,
+      "counter_width": 4,
+      "last_full_id": null,
+      "updated_at": null
+    },
+    "EP00": {
       "last_issued": null,
       "counter_width": 4,
       "last_full_id": null,

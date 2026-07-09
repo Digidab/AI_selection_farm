@@ -350,17 +350,19 @@ studbook/model_registry/
 ### Model passport example
 
 ```yaml
-model_id: qwen3_0_6b_gen_001
+model_id: MO000000
+model_name: qwen3_0_6b_candidate
 model_type: llm
 base_model: qwen3:0.6b
-generation: 1
+resource_class: 0.6b_1b
+generation:
+parent_model_id:
 status: trained_candidate
-resource_class: low
 allowed_for_pipeline: false
 allowed_for_breeding: true
-dataset_id: golden_dataset_v001
-selector_version: selector_v001
-bereiter_report_id: bereiter_report_001
+created_at:
+updated_at:
+metadata: {}
 ```
 
 ---
@@ -1147,16 +1149,23 @@ No model is allowed into breeding or worker status without:
 
 ```text
 model_id
+model_name
+model_type
 base_model
-dataset_id
-training_config_id
-selector_version
-bereiter_report_id
-eval_score
-resource_usage
+resource_class
+generation
+parent_model_id
 status
-decision reason
+allowed_for_pipeline
+allowed_for_breeding
+created_at
+updated_at
+metadata
 ```
+
+Run-specific fields (`dataset_id`, `training_config_id`, `selector_version`, metrics and resource
+usage) are recorded in runtime tables or generated reports, not in the model passport. Decision
+reasons are recorded in `studbook/breeding_decisions/` or `studbook/worker_admissions/`.
 
 ## 6. Every generation must have a report
 

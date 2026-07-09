@@ -1,51 +1,17 @@
 {
   "system_name": "AI_selection_farm_ID_Registry",
-  "version": "1.0.0",
-  "description": "Справочник соответствия префиксов и абстракций для генерации ID",
+  "version": "2.0.0",
+  "description": "Справочник соответствия префиксов и абстракций для генерации ID. Поле status: 'active' — генератор выдаёт ID сейчас; 'deferred' — префикс зарезервирован навсегда, но выдача ID заблокирована до выполнения activation_condition. См. ID_DOMAINS.md для полного обоснования по каждому домену.",
   "registry": {
-    "PR": [
-      {
-        "index": "00",
-        "full_prefix": "PR00",
-        "entity_name_ru": "Процессы",
-        "entity_name_en": "Processes",
-        "description": "Идентификаторы для отслеживания системных и вычислительных процессов"
-      }
-    ],
     "MO": [
       {
         "index": "00",
         "full_prefix": "MO00",
         "entity_name_ru": "Модели",
         "entity_name_en": "Models",
-        "description": "Идентификаторы архитектур и весов нейросетевых моделей"
-      }
-    ],
-    "EP": [
-      {
-        "index": "00",
-        "full_prefix": "EP00",
-        "entity_name_ru": "Эпохи",
-        "entity_name_en": "Epochs",
-        "description": "Идентификаторы эпох обучения моделей"
-      }
-    ],
-    "GE": [
-      {
-        "index": "00",
-        "full_prefix": "GE00",
-        "entity_name_ru": "Поколения",
-        "entity_name_en": "Generations",
-        "description": "Идентификаторы поколений в рамках отбора (селекции)"
-      }
-    ],
-    "PE": [
-      {
-        "index": "00",
-        "full_prefix": "PE00",
-        "entity_name_ru": "Родословные",
-        "entity_name_en": "Pedigree",
-        "description": "Идентификаторы генеалогических древ и родословных линий"
+        "description": "model_id — farm.model_registry (v001 core)",
+        "status": "active",
+        "activation_condition": null
       }
     ],
     "RU": [
@@ -54,34 +20,86 @@
         "full_prefix": "RU00",
         "entity_name_ru": "Запуски",
         "entity_name_en": "Runs",
-        "description": "Идентификаторы запусков процессов selector/bereiter/trainer (run_id)"
+        "description": "run_id — farm.runs, одна строка на исполнение Selector/Bereiter/Trainer (v001 core)",
+        "status": "active",
+        "activation_condition": null
       }
     ],
-    "DA": [
+    "TA": [
       {
         "index": "00",
-        "full_prefix": "DA00",
-        "entity_name_ru": "Датасеты",
-        "entity_name_en": "Datasets",
-        "description": "Идентификаторы датасетов (raw/golden/rejected/eval), dataset_id"
+        "full_prefix": "TA00",
+        "entity_name_ru": "Задачи",
+        "entity_name_en": "Tasks",
+        "description": "task_id — farm.tasks, очередь работы, резюмируемая по status (v001 core)",
+        "status": "active",
+        "activation_condition": null
       }
     ],
-    "TC": [
+    "GN": [
       {
         "index": "00",
-        "full_prefix": "TC00",
-        "entity_name_ru": "Конфигурации обучения",
-        "entity_name_en": "Training Configs",
-        "description": "Идентификаторы конфигураций обучения/fine-tuning, training_config_id"
+        "full_prefix": "GN00",
+        "entity_name_ru": "Вывод модели",
+        "entity_name_en": "Model Generations",
+        "description": "generation_id — farm.generations, сырой вывод модели по задаче (v001 core). НЕ путать с GE — поколением в смысле разведения.",
+        "status": "active",
+        "activation_condition": null
       }
     ],
-    "SV": [
+    "VA": [
       {
         "index": "00",
-        "full_prefix": "SV00",
-        "entity_name_ru": "Версии селектора",
-        "entity_name_en": "Selector Versions",
-        "description": "Идентификаторы версий Selector, selector_version"
+        "full_prefix": "VA00",
+        "entity_name_ru": "Результаты валидации",
+        "entity_name_en": "Validation Results",
+        "description": "validation_id — farm.validation_results, вердикт Selector'а по конкретному выводу модели (v001 core)",
+        "status": "active",
+        "activation_condition": null
+      }
+    ],
+    "SA": [
+      {
+        "index": "00",
+        "full_prefix": "SA00",
+        "entity_name_ru": "Сэмплы",
+        "entity_name_en": "Samples",
+        "description": "sample_id — farm.samples, итоговый accepted/rejected сэмпл (v001 core)",
+        "status": "active",
+        "activation_condition": null
+      }
+    ],
+    "EM": [
+      {
+        "index": "00",
+        "full_prefix": "EM00",
+        "entity_name_ru": "Эмбеддинги",
+        "entity_name_en": "Embeddings",
+        "description": "embedding_id — farm.embeddings, векторы для pgvector-дедупликации (v001 core)",
+        "status": "active",
+        "activation_condition": null
+      }
+    ],
+    "GE": [
+      {
+        "index": "00",
+        "full_prefix": "GE00",
+        "entity_name_ru": "Поколения (разведение)",
+        "entity_name_en": "Breeding Generations",
+        "description": "Номер поколения в цикле отбора (studbook/generation_reports/generation_NNN/, model_registry.generation). НЕ путать с GN — сырым выводом модели.",
+        "status": "deferred",
+        "activation_condition": "Нужно минимум 2 поколения моделей и хотя бы одно реальное решение о разведении — сейчас моделей ноль (см. database_guide.md §8)."
+      }
+    ],
+    "PE": [
+      {
+        "index": "00",
+        "full_prefix": "PE00",
+        "entity_name_ru": "Родословные",
+        "entity_name_en": "Pedigree",
+        "description": "Идентификаторы генеалогических древ и родословных линий (farm.model_lineage)",
+        "status": "deferred",
+        "activation_condition": "farm.model_lineage явно отложена в database_guide.md §8: нужна минимум вторая модель, чтобы связь родитель/потомок вообще существовала."
       }
     ],
     "BR": [
@@ -90,7 +108,20 @@
         "full_prefix": "BR00",
         "entity_name_ru": "Отчёты Bereiter",
         "entity_name_en": "Bereiter Reports",
-        "description": "Идентификаторы отчётов об испытаниях моделей, bereiter_report_id"
+        "description": "bereiter_report_id — farm.bereiter_trials / bereiter_trial_results",
+        "status": "deferred",
+        "activation_condition": "Bereiter (services/bereiter) ещё не реализован; таблицы явно отложены в database_guide.md §8."
+      }
+    ],
+    "EP": [
+      {
+        "index": "00",
+        "full_prefix": "EP00",
+        "entity_name_ru": "Эпохи",
+        "entity_name_en": "Training Epochs",
+        "description": "Идентификаторы эпох обучения (farm.training_jobs)",
+        "status": "deferred",
+        "activation_condition": "Trainer (services/trainer) ещё не реализован; farm.training_jobs явно отложена в database_guide.md §8."
       }
     ]
   }

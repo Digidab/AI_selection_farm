@@ -132,8 +132,9 @@ Seven tables, not ten. Two tables from the original draft plan are intentionally
 | `model_name` | text | |
 | `model_type` | text | `llm`, `ml`, `hybrid`, `embedding`, `judge`, `reward` |
 | `base_model` | text | e.g. `qwen3:0.6b` |
-| `resource_class` | text | matches the project's resource buckets: `0.6b_1b`, `1.5b_1.7b`, `3b`, `4b`, `7b_plus` |
-| `generation` | int | breeding generation number |
+| `resource_class` | text | matches the project's resource buckets: `0.6b_1b`, `1.5b_1.7b`, `3b`, `4b`, `7b_plus`, `classical_ml` (non-LLM models aren't measured in params) |
+| `generation` | int, nullable | breeding generation number; null until GE (breeding generations) is activated |
+| `parent_model_id` | text, nullable | self-reference for lineage; no FK constraint until PE (pedigree) is activated — see `configs/id_mapping/ID_DOMAINS.md` |
 | `status` | text | `raw_candidate`, `trained_candidate`, `tested_candidate`, `breeding_model`, `worker_model`, `rejected_model`, `archived_model` |
 | `allowed_for_pipeline` | bool | |
 | `allowed_for_breeding` | bool | |

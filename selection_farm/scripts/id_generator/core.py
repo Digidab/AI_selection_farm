@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-ID_MAPPING_DIR = Path(__file__).resolve().parent.parent / "configs" / "id_mapping"
+ID_MAPPING_DIR = Path(__file__).resolve().parent.parent.parent / "configs" / "id_mapping"
 DIRECTORY_FILE = ID_MAPPING_DIR / "id_directory.json"
 COUNTERS_FILE = ID_MAPPING_DIR / "id_counters.json"
 
@@ -13,15 +13,19 @@ class UnknownEntityError(Exception):
     pass
 
 
+class DeferredEntityError(Exception):
+    pass
+
+
 def _load_directory() -> dict:
     with open(DIRECTORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def resolve_full_prefix(key: str) -> str:
-    """Resolve an entity name or an existing full_prefix (e.g. 'MO00') to a
-    registered full_prefix. Never invents a new one — unregistered entities
-    must be added to id_directory.json by a human first."""
+def _find_entry(key: str) -> dict:
+    """Resolve an entity name or an existing full_prefix (e.g. 'MO00') to its
+    registered directory entry. Never invents a new one — unregistered
+    entities must be added to id_directory.json by a human first."""
     key = key.strip()
     directory = _load_directory()
     all_entries = [entry for entries in directory["registry"].values() for entry in entries]
@@ -30,7 +34,7 @@ def resolve_full_prefix(key: str) -> str:
         candidate = key.upper()
         for entry in all_entries:
             if entry["full_prefix"] == candidate:
-                return candidate
+                return entry
         raise UnknownEntityError(
             f"'{candidate}' is not a registered full_prefix in id_directory.json. "
             "Propose it to the user for confirmation before registering — prefixes are permanent."
@@ -39,13 +43,28 @@ def resolve_full_prefix(key: str) -> str:
     key_lower = key.lower()
     for entry in all_entries:
         if key_lower in (entry["entity_name_en"].lower(), entry["entity_name_ru"].lower()):
-            return entry["full_prefix"]
+            return entry
 
     raise UnknownEntityError(
         f"Entity '{key}' is not registered in id_directory.json. "
         "Propose a new prefix/index to the user for confirmation before adding it — "
         "prefixes are permanent once assigned."
     )
+
+
+def resolve_full_prefix(key: str) -> str:
+    """Resolve to an ACTIVE full_prefix. Raises DeferredEntityError if the
+    entity is registered but its subsystem isn't built yet (see
+    ID_DOMAINS.md) — reserving a prefix must not be mistaken for permission
+    to issue IDs for it."""
+    entry = _find_entry(key)
+    if entry.get("status") != "active":
+        raise DeferredEntityError(
+            f"'{entry['full_prefix']}' ({entry['entity_name_en']}) is reserved but deferred: "
+            f"{entry.get('activation_condition') or 'no activation condition recorded'}. "
+            "See ID_DOMAINS.md before activating it."
+        )
+    return entry["full_prefix"]
 
 
 def _next_counter(value: int, width: int) -> tuple[str, int]:
