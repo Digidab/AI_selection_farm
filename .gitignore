@@ -6,8 +6,8 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Personal local notes
-/office/my_notes.md
+# Local workspace / personal notes outside project payload
+/office/
 
 # Database dumps / backups (heavy, regenerable)
 *.dump
