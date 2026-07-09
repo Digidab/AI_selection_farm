@@ -6,6 +6,9 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Personal local notes
+/office/my_notes.md
+
 # Database dumps / backups (heavy, regenerable)
 *.dump
 *.sql.gz
