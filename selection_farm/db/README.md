@@ -18,7 +18,8 @@ Full schema design, versioning strategy, and the database-vs-files ownership rul
   `validation_results`, `samples`.
 - `migrations/005_embeddings.sql` — embeddings storage table for pgvector deduplication and
   similarity search.
-- Future `006_indexes.sql` — performance and pgvector indexes, including HNSW.
+- `migrations/006_indexes.sql` — 16 runtime-core B-tree indexes and one pgvector HNSW cosine
+  index.
 
 ## Current Applied State
 
@@ -35,11 +36,21 @@ Task #05 embeddings migration verdict: `passed`. On 2026-07-10, only the increme
 temporary `vector(768)` rows were inserted, exact cosine-distance search returned the expected
 nearest embedding at distance `0.000000`, and all `_tz05_%` smoke-test rows were cleaned up.
 
+Task #06 indexes migration verdict: `passed`. On 2026-07-10, only the incremental
+`006_indexes.sql` migration was applied to the live `selection_farm_postgres` container. The live
+`farm` schema now has 31 indexes: 14 constraint-owned indexes from primary-key and unique
+constraints plus 17 migration-owned secondary indexes. All 17 catalog definitions matched the
+migration contract. With sequential scans disabled for the smoke session, the canonical cosine
+query used `idx_embeddings_embedding_hnsw`, returned `_tz06_embedding_a` at distance `0.000000`,
+and cleanup left zero `_tz06_%` rows.
+
 ## Agent Notes
 
 - Keep `schema.sql` synced with the exact concatenation of migrations after adding a new migration.
 - Apply only incremental migration files to the existing live database.
 - Do not apply the full `schema.sql` to the existing live container; it is a fresh-environment
   snapshot and includes migrations that may already be applied.
-- Keep indexes, including HNSW, in future `006_indexes.sql`; `005_embeddings.sql` owns storage only.
-- Selector dedup logic and Model Lab are not implemented by migration `005`.
+- `005_embeddings.sql` owns vector storage; `006_indexes.sql` owns the v001 secondary indexes,
+  including HNSW.
+- DB integration tests, Selector runtime logic, and Model Lab remain future work; migration `006`
+  implements indexes only.
