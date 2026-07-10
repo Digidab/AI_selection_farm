@@ -16,8 +16,9 @@ Full schema design, versioning strategy, and the database-vs-files ownership rul
 - `migrations/003_model_registry.sql` — operational model registry table.
 - `migrations/004_runtime_core.sql` — runtime workflow tables: `runs`, `tasks`, `generations`,
   `validation_results`, `samples`.
-- Future `005_embeddings.sql` — embeddings table.
-- Future `006_indexes.sql` — performance and pgvector indexes.
+- `migrations/005_embeddings.sql` — embeddings storage table for pgvector deduplication and
+  similarity search.
+- Future `006_indexes.sql` — performance and pgvector indexes, including HNSW.
 
 ## Current Applied State
 
@@ -27,7 +28,12 @@ to the live `selection_farm_postgres` container, the temporary chain
 was inserted and joined successfully, and all `_tz04_%` rows were cleaned up.
 
 The live `farm` schema now contains `model_registry`, `runs`, `tasks`, `generations`,
-`validation_results`, and `samples`.
+`validation_results`, `samples`, and `embeddings`.
+
+Task #05 embeddings migration verdict: `passed`. On 2026-07-10, only the incremental
+`005_embeddings.sql` migration was applied to the live `selection_farm_postgres` container. Two
+temporary `vector(768)` rows were inserted, exact cosine-distance search returned the expected
+nearest embedding at distance `0.000000`, and all `_tz05_%` smoke-test rows were cleaned up.
 
 ## Agent Notes
 
@@ -35,3 +41,5 @@ The live `farm` schema now contains `model_registry`, `runs`, `tasks`, `generati
 - Apply only incremental migration files to the existing live database.
 - Do not apply the full `schema.sql` to the existing live container; it is a fresh-environment
   snapshot and includes migrations that may already be applied.
+- Keep indexes, including HNSW, in future `006_indexes.sql`; `005_embeddings.sql` owns storage only.
+- Selector dedup logic and Model Lab are not implemented by migration `005`.
