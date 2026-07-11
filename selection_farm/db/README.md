@@ -44,6 +44,13 @@ migration contract. With sequential scans disabled for the smoke session, the ca
 query used `idx_embeddings_embedding_hnsw`, returned `_tz06_embedding_a` at distance `0.000000`,
 and cleanup left zero `_tz06_%` rows.
 
+Task #07 DB integration-test verdict: `passed`. On 2026-07-10, the targeted PostgreSQL/pgvector
+suite passed all five tests and the full integration directory passed all six tests, with the
+Ollama test explicitly still a placeholder. The tests verified the exact seven-table/31-index
+catalog, schema snapshot parity with migrations `001-006`, the runtime-core FK round trip, and
+`vector(768)` cosine behavior. Independent cleanup verification found zero `_tz07_` rows in all
+seven v001 tables.
+
 ## Agent Notes
 
 - Keep `schema.sql` synced with the exact concatenation of migrations after adding a new migration.
@@ -52,5 +59,6 @@ and cleanup left zero `_tz06_%` rows.
   snapshot and includes migrations that may already be applied.
 - `005_embeddings.sql` owns vector storage; `006_indexes.sql` owns the v001 secondary indexes,
   including HNSW.
-- DB integration tests, Selector runtime logic, and Model Lab remain future work; migration `006`
-  implements indexes only.
+- DB integration tests are implemented under `tests/integration/`; their commands, isolation
+  contract, runtime verdict, and remaining placeholders are documented in `tests/README.md`.
+- Selector runtime logic and Model Lab remain future work; migration `006` implements indexes only.
