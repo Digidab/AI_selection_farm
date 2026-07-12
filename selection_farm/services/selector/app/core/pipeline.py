@@ -53,7 +53,6 @@ class EvidenceState:
     generation_id: str | None = None
     validation_id: str | None = None
     sample_id: str | None = None
-    embedding_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +84,8 @@ class PipelineRepository(Protocol):
     ) -> RunRecord | None: ...
 
     def create_run(self, **values: Any) -> RunRecord: ...
+
+    def load_run(self, run_id: str) -> RunRecord: ...
 
     def create_task_once(self, **values: Any) -> TaskRecord: ...
 
@@ -196,7 +197,7 @@ class SelectorPipeline:
             self.repository.transition_run(run.run_id, RunStatus.FAILED)
             raise PipelineError(f"Selector run {run.run_id} failed for {failures} item(s)")
         self.repository.transition_run(run.run_id, RunStatus.COMPLETED)
-        return run
+        return self.repository.load_run(run.run_id)
 
     def _process(
         self,

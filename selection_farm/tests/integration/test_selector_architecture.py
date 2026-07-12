@@ -35,6 +35,10 @@ PACKAGE_READMES = (
     "ml/README.md",
     "ml/pipelines/README.md",
 )
+LEGACY_AMBIGUOUS_PATHS = (
+    PROJECT_ROOT / "configs/selector/selector_v001.yaml",
+    PROJECT_ROOT / "datasets/raw/tasks.jsonl",
+)
 
 
 def _target_branch(parts: tuple[str, ...]) -> str | None:
@@ -113,6 +117,9 @@ def test_scaffold_has_readmes_and_no_legacy_flat_modules() -> None:
 
     assert not missing_readmes
     assert not remaining_legacy
+    assert [
+        str(path.relative_to(PROJECT_ROOT)) for path in LEGACY_AMBIGUOUS_PATHS if path.exists()
+    ] == []
 
 
 def test_selector_import_graph_is_isolated() -> None:

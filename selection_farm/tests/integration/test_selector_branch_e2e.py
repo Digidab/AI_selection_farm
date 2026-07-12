@@ -217,15 +217,18 @@ def test_assembled_branches_persist_export_isolate_and_cleanup(
         llm_settings,
         db_connection,
         registry=build_llm_registry(runtime),
+        embedding_id_provider=provider,
     )
     ml_branch = build_ml_branch(ml_settings, db_connection)
 
     try:
         _insert_models(db_connection, llm_model_id, ml_model_id)
-        SelectorPipeline(repository).run(llm_branch)
-        SelectorPipeline(repository).run(ml_branch)
+        llm_result = SelectorPipeline(repository).run(llm_branch)
+        ml_result = SelectorPipeline(repository).run(ml_branch)
 
         assert runtime.generate_calls == runtime.embed_calls == 1
+        assert (llm_result.status.value, ml_result.status.value) == ("completed", "completed")
+        assert llm_result.counters.processed == ml_result.counters.processed == 1
         with db_connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -307,6 +310,7 @@ def test_assembled_branches_persist_export_isolate_and_cleanup(
             llm_settings.model_copy(update={"model_id": ml_model_id}),
             db_connection,
             registry=build_llm_registry(MockLLMRuntime()),
+            embedding_id_provider=provider,
         )
         with pytest.raises(PipelineError, match="Model type mismatch"):
             SelectorPipeline(repository).run(wrong_branch)

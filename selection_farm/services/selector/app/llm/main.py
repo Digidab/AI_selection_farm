@@ -15,6 +15,11 @@ from .config import DEFAULT_LLM_CONFIG_PATH, LLMBranchSettings, load_llm_config
 from .evaluators import LLMCandidateEvaluator
 from .evaluators.json_schema import JSONSchemaEvaluator
 from .evaluators.semantic_dedup import PostgresAcceptedEmbeddingLookup, SemanticDedupEvaluator
+from .persistence import (
+    EmbeddingIDProvider,
+    LLMEmbeddingRepository,
+    ProductionEmbeddingIDProvider,
+)
 from .registry import LLMComponentRegistry, ResolvedLLMComponents, build_reference_registry
 from .runtimes.ollama import OllamaRuntimeAdapter
 from .schemas import LLMTask, load_llm_tasks
@@ -46,10 +51,12 @@ class LLMSelectorBranch:
         settings: LLMBranchSettings,
         components: ResolvedLLMComponents,
         lookup: PostgresAcceptedEmbeddingLookup,
+        embedding_repository: LLMEmbeddingRepository,
     ) -> None:
         self.settings = settings
         self.components = components
         self.lookup = lookup
+        self.embedding_repository = embedding_repository
         self.model_id = settings.model_id
         self.dataset_id = settings.dataset_id
         self.config_id = settings.config_id
@@ -134,9 +141,8 @@ class LLMSelectorBranch:
         result: _LLMEvaluation,
     ) -> None:
         if result.decision_status is DecisionStatus.ACCEPTED and result.embedding is not None:
-            repository.create_embedding_once(
-                source_type="generation",
-                source_id=generation_id,
+            self.embedding_repository.create_once(
+                generation_id=generation_id,
                 model_id=self.settings.embedding.model,
                 values=result.embedding,
                 metadata={"branch_id": self.branch_id},
@@ -158,6 +164,7 @@ def build_branch(
     connection: Any,
     *,
     registry: LLMComponentRegistry | None = None,
+    embedding_id_provider: EmbeddingIDProvider | None = None,
 ) -> LLMSelectorBranch:
     if registry is None:
         runtime = OllamaRuntimeAdapter.from_settings(settings.runtime)
@@ -167,6 +174,10 @@ def build_branch(
         settings=settings,
         components=components,
         lookup=PostgresAcceptedEmbeddingLookup(connection),
+        embedding_repository=LLMEmbeddingRepository(
+            connection,
+            embedding_id_provider or ProductionEmbeddingIDProvider(),
+        ),
     )
 
 

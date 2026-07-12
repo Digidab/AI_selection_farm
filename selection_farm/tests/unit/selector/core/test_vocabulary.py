@@ -8,7 +8,8 @@ FORBIDDEN_TERMS = (
     "feature_vector",
     "class_label",
     "semantic_threshold",
-    "vector(768)",
+    "embedding",
+    "vector",
     "nomic-embed",
 )
 

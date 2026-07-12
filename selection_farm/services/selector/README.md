@@ -13,7 +13,8 @@ llm  ──────> core <────── ml
 - `app/ml/` owns typed features, estimator inference, ML validation, and exact deduplication.
 
 Core must not import a branch, and branches must not import one another. The architecture test
-enforces these rules. Tasks 2–7 provide the scaffold, neutral Core contracts/repository/resume
+enforces these rules. Embedding records, vector SQL, and EM ID issuance remain physically owned by
+the LLM branch rather than Core. Tasks 2–7 provide the scaffold, neutral Core contracts/repository/resume
 foundations, strict isolated LLM/ML inputs, and the LLM component seam. The LLM reference allowlist
 contains `single_turn`, `ollama`, and `text`; profile capability checks precede later run creation,
 and Ollama generation/embedding calls are direct, non-streaming, timeout-bound, and bounded-retry.

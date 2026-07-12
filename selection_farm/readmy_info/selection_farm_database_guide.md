@@ -13,11 +13,12 @@ Infrastructure status (see `SELECTION_FARM_SOFTWARE_STACK.md` for details):
 
 ```text
 Postgres + pgvector : running (container selection_farm_postgres, bind mount db/postgres_volume/)
-Schema applied       : NOT YET — db/schema.sql and db/migrations/*.sql are still empty placeholders
+Schema applied       : YES — migrations 001-006, 7 v001 tables and 31 indexes verified live
 ```
 
-This guide is the design that `db/schema.sql` and `db/migrations/001`–`006` (see §2) should
-implement.
+This guide defines the implemented design represented by `db/schema.sql` and
+`db/migrations/001`–`006` (see §2). For an existing live database, apply only a new incremental
+migration; do not reapply the full snapshot.
 
 ---
 
@@ -402,13 +403,13 @@ remain the only record of a dataset version. `runs.dataset_id` and `samples.data
 text labels — enough for traceability ("which dataset was this run against") without a second
 table to keep in sync.
 
-When `scripts/export_golden_dataset.sh` is actually implemented, the flow should be:
+The implemented `scripts/export_golden_dataset.sh` follows this flow independently for the LLM and
+ML dataset identities:
 
 ```text
-SELECT * FROM farm.samples WHERE status = 'accepted' AND dataset_id = ...
-      → write datasets/golden/golden_dataset_vNNN.jsonl
-      → compute checksum → checksums.txt
-      → regenerate dataset_card_vNNN.md from the same query + run metadata
+SELECT joined evidence FROM farm.samples WHERE status = ... AND dataset_id = ...
+      → branch-owned serializer
+      → atomically replace distinct accepted/rejected LLM and ML JSONL exports
 ```
 
 i.e. the dataset card is a **generated export**, not something edited by hand in parallel with the

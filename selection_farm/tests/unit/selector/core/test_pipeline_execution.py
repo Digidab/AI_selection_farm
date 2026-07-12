@@ -59,6 +59,10 @@ class MemoryRepository:
         self.run = self._run("run-new", RunStatus.CREATED, total=total_items)
         return self.run
 
+    def load_run(self, run_id: str) -> RunRecord:
+        assert self.run is not None and self.run.run_id == run_id
+        return self.run
+
     def create_task_once(
         self, *, run_id: str, source_id: str, task_type: str, input_payload, metadata
     ) -> TaskRecord:
@@ -134,6 +138,18 @@ class MemoryRepository:
         self.tasks[task_id] = self.tasks[task_id].model_copy(update={"status": target})
         self.accepted += status == "accepted"
         self.rejected += status == "rejected"
+        assert self.run is not None
+        self.run = self.run.model_copy(
+            update={
+                "counters": self.run.counters.model_copy(
+                    update={
+                        "processed": self.run.counters.processed + 1,
+                        "accepted": self.run.counters.accepted + (status == "accepted"),
+                        "rejected": self.run.counters.rejected + (status == "rejected"),
+                    }
+                )
+            }
+        )
 
     def fail_task_once(self, *, task_id: str, run_id: str) -> None:
         self.tasks[task_id] = self.tasks[task_id].model_copy(update={"status": TaskStatus.FAILED})
@@ -184,11 +200,13 @@ def test_branches_accept_and_reject_independently(branch_id: str, accepted: bool
     repository = MemoryRepository(branch_id)
     branch = FakeBranch(branch_id, accepted)
 
-    SelectorPipeline(repository).run(branch)
+    result = SelectorPipeline(repository).run(branch)
 
     assert repository.run is not None and repository.run.status is RunStatus.COMPLETED
     assert (repository.accepted, repository.rejected) == ((1, 0) if accepted else (0, 1))
     assert branch.execute_calls == branch.evaluate_calls == branch.auxiliary_calls == 1
+    assert result.status is RunStatus.COMPLETED
+    assert result.counters.processed == 1
 
 
 @pytest.mark.parametrize("branch_id", ["llm", "ml"])

@@ -24,6 +24,11 @@ _EMBEDDING_DIMENSION = 768
 _DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
 
+def _normalized_model_identity(model: str) -> str:
+    normalized = model.strip()
+    return normalized.removesuffix(":latest")
+
+
 class OllamaRuntimeError(CoreError):
     def __init__(self, message: str, *, retryable: bool = False) -> None:
         super().__init__(ErrorCode.EXECUTION, message, retryable=retryable)
@@ -65,8 +70,7 @@ class OllamaRuntimeAdapter:
         endpoint = environ.get(settings.endpoint_env)
         if endpoint is None or not endpoint.strip():
             raise OllamaRuntimeError(
-                f"Required Ollama endpoint environment variable is missing: "
-                f"{settings.endpoint_env}"
+                f"Required Ollama endpoint environment variable is missing: {settings.endpoint_env}"
             )
         return cls(endpoint, client=client)
 
@@ -119,6 +123,8 @@ class OllamaRuntimeAdapter:
         embeddings = data.get("embeddings")
         if not isinstance(response_model, str) or not response_model.strip():
             raise OllamaRuntimeError("Invalid Ollama embed response: missing model")
+        if _normalized_model_identity(response_model) != _normalized_model_identity(model):
+            raise OllamaRuntimeError("Invalid Ollama embed response: model identity mismatch")
         if not isinstance(embeddings, list) or len(embeddings) != len(texts):
             raise OllamaRuntimeError("Invalid Ollama embed response: vector count mismatch")
 

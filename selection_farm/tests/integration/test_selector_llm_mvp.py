@@ -5,6 +5,20 @@ import pytest
 from services.selector.app.llm.evaluators.semantic_dedup import (
     PostgresAcceptedEmbeddingLookup,
 )
+from services.selector.app.llm.persistence import (
+    LLMEmbeddingPersistenceError,
+    LLMEmbeddingRepository,
+)
+
+
+class FakeEmbeddingIDProvider:
+    def __init__(self, prefix: str) -> None:
+        self.prefix = prefix
+        self.calls = 0
+
+    def issue_embedding_id(self) -> str:
+        self.calls += 1
+        return f"{self.prefix}_embedding_{self.calls}"
 
 
 def _vector(axis: int) -> list[float]:
@@ -191,3 +205,61 @@ def test_pgvector_lookup_is_limited_to_accepted_same_dataset_llm_samples(
         )
         assert cursor.fetchone() == (0, 0, 0, 0, 0, 0, 0)
     db_connection.commit()
+
+
+def test_llm_owned_embedding_repository_is_idempotent_and_dimension_strict(
+    db_connection,
+) -> None:
+    prefix = f"_tz08_llm_persistence_{uuid4().hex}"
+    generation_id = f"{prefix}_generation"
+    provider = FakeEmbeddingIDProvider(prefix)
+    repository = LLMEmbeddingRepository(db_connection, provider)
+    _cleanup(db_connection, prefix)
+
+    try:
+        created = repository.create_once(
+            generation_id=generation_id,
+            model_id="nomic-embed-text",
+            values=_vector(0),
+            metadata={"branch_id": "llm"},
+        )
+        repeated = repository.create_once(
+            generation_id=generation_id,
+            model_id="nomic-embed-text",
+            values=_vector(1),
+        )
+
+        assert repeated.embedding_id == created.embedding_id
+        assert provider.calls == 1
+        with pytest.raises(LLMEmbeddingPersistenceError, match="model identity conflicts"):
+            repository.create_once(
+                generation_id=generation_id,
+                model_id="other-embedding-model",
+                values=_vector(1),
+            )
+        assert provider.calls == 1
+        with db_connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT source_type, source_id, embedding_model_id, metadata
+                FROM farm.embeddings WHERE embedding_id = %s
+                """,
+                (created.embedding_id,),
+            )
+            assert cursor.fetchone() == (
+                "generation",
+                generation_id,
+                "nomic-embed-text",
+                {"branch_id": "llm"},
+            )
+        db_connection.commit()
+
+        with pytest.raises(LLMEmbeddingPersistenceError, match="exactly 768"):
+            repository.create_once(
+                generation_id=f"{prefix}_invalid_generation",
+                model_id="nomic-embed-text",
+                values=[0.0] * 767,
+            )
+        assert provider.calls == 1
+    finally:
+        _cleanup(db_connection, prefix)

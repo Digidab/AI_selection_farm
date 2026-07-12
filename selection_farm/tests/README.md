@@ -154,7 +154,13 @@ resolved settings.
   LLM runtime with exact 768D evidence, and a pytest-owned joblib/sklearn artifact. Both branches
   complete with exact `total=processed=accepted=1` counters; LLM owns one embedding and ML owns
   none; four DB-first exports are branch-distinct and byte-stable; wrong model type creates no run.
-- Verified after Task 13 on 2026-07-12: Selector unit + architecture matrix passed `170/170`; full
+- Verified after audit remediation on 2026-07-12: ambiguous unified config/raw paths are absent;
+  embedding persistence and EM issuance are LLM-owned; provider model-identity mismatch fails
+  closed; successful pipeline calls return refreshed completed run state. Selector unit +
+  architecture passed `172/172`, full integration passed `16/16`, and the combined matrix passed
+  `184/184` with two upstream NumPy/joblib deprecation warnings. Cleanup left zero `_tz08_` rows
+  and production ID counters unchanged.
+- Historical Task 13 evidence from 2026-07-12: Selector unit + architecture passed `170/170`; full
   integration passed `15/15` (two upstream NumPy/joblib deprecation warnings); targeted assembled
   live E2E passed `1/1`; the final combined Selector unit + full integration run passed `181/181`.
   Final DB audit returned zero `_tz08_` rows in all seven tables, no `_tz08_` files remained, and

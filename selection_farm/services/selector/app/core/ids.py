@@ -2,7 +2,6 @@
 
 from typing import Protocol, runtime_checkable
 
-from scripts.id_generator.embedding_id import issue_embedding_id
 from scripts.id_generator.generation_id import issue_generation_id
 from scripts.id_generator.model_id import issue_model_id
 from scripts.id_generator.run_id import issue_run_id
@@ -25,8 +24,6 @@ class IDProvider(Protocol):
 
     def issue_sample_id(self) -> str: ...
 
-    def issue_embedding_id(self) -> str: ...
-
 
 class ProductionIDProvider:
     def issue_model_id(self) -> str:
@@ -46,6 +43,3 @@ class ProductionIDProvider:
 
     def issue_sample_id(self) -> str:
         return issue_sample_id()
-
-    def issue_embedding_id(self) -> str:
-        return issue_embedding_id()

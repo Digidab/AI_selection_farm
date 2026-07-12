@@ -1,8 +1,7 @@
 """Typed PostgreSQL repository for branch-neutral Selector evidence."""
 
 import json
-import math
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
@@ -50,13 +49,6 @@ class SampleRecord:
 
 
 @dataclass(frozen=True, slots=True)
-class EmbeddingRecord:
-    embedding_id: str
-    source_type: str
-    source_id: str
-
-
-@dataclass(frozen=True, slots=True)
 class ResumeItem:
     task: TaskRecord
     evidence: EvidenceState
@@ -64,13 +56,6 @@ class ResumeItem:
 
 def _json(value: Mapping[str, Any] | None) -> str:
     return json.dumps(value or {}, ensure_ascii=False, sort_keys=True, allow_nan=False)
-
-
-def _vector_literal(values: Sequence[float]) -> str:
-    vector = tuple(float(value) for value in values)
-    if not vector or not all(math.isfinite(value) for value in vector):
-        raise RepositoryError("Vector evidence must contain finite values")
-    return f"[{','.join(str(value) for value in vector)}]"
 
 
 class SelectorRepository:
@@ -196,6 +181,35 @@ class SelectorRepository:
                 ),
             )
         return record
+
+    def load_run(self, run_id: str) -> RunRecord:
+        with self.transaction(), self.connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT status, model_id, dataset_id, config_id, total_items, processed_items,
+                       accepted_items, rejected_items, failed_items, metadata
+                FROM farm.runs WHERE run_id = %s
+                """,
+                (run_id,),
+            )
+            row = cursor.fetchone()
+        if row is None:
+            raise RepositoryError(f"Unknown run_id: {run_id}")
+        return RunRecord(
+            run_id=run_id,
+            status=RunStatus(row[0]),
+            model_id=row[1],
+            dataset_id=row[2],
+            config_id=row[3],
+            counters=RunCounters(
+                total=row[4],
+                processed=row[5],
+                accepted=row[6],
+                rejected=row[7],
+                failed=row[8],
+            ),
+            metadata=row[9],
+        )
 
     def create_task(
         self,
@@ -548,49 +562,6 @@ class SelectorRepository:
             )
             return SampleRecord(sample_id, generation_id, status)
 
-    def create_embedding_once(
-        self,
-        *,
-        source_type: str,
-        source_id: str,
-        model_id: str,
-        values: Sequence[float],
-        metadata: Mapping[str, Any] | None = None,
-    ) -> EmbeddingRecord:
-        with self.transaction(), self.connection.cursor() as cursor:
-            self._lock(cursor, f"embedding:{source_type}:{source_id}")
-            cursor.execute(
-                """
-                SELECT embedding_id, source_type, source_id
-                FROM farm.embeddings
-                WHERE source_type = %s AND source_id = %s
-                ORDER BY id LIMIT 1
-                """,
-                (source_type, source_id),
-            )
-            row = cursor.fetchone()
-            if row is not None:
-                return EmbeddingRecord(*row)
-            embedding_id = self.id_provider.issue_embedding_id()
-            cursor.execute(
-                """
-                INSERT INTO farm.embeddings (
-                    embedding_id, source_type, source_id, embedding_model_id,
-                    embedding, metadata
-                )
-                VALUES (%s, %s, %s, %s, %s::vector, %s::jsonb)
-                """,
-                (
-                    embedding_id,
-                    source_type,
-                    source_id,
-                    model_id,
-                    _vector_literal(values),
-                    _json(metadata),
-                ),
-            )
-            return EmbeddingRecord(embedding_id, source_type, source_id)
-
     def finalize_task_once(
         self,
         *,
@@ -710,7 +681,7 @@ class SelectorRepository:
                 SELECT task.task_id, task.run_id, task.task_type, task.status,
                        task.input_payload, task.metadata,
                        generation.generation_id, validation.validation_id,
-                       sample.sample_id, embedding.embedding_id
+                       sample.sample_id
                 FROM farm.tasks AS task
                 LEFT JOIN LATERAL (
                     SELECT generation_id FROM farm.generations
@@ -724,10 +695,6 @@ class SelectorRepository:
                     SELECT sample_id FROM farm.samples
                     WHERE generation_id = generation.generation_id ORDER BY id LIMIT 1
                 ) AS sample ON true
-                LEFT JOIN LATERAL (
-                    SELECT embedding_id FROM farm.embeddings
-                    WHERE source_id = generation.generation_id ORDER BY id LIMIT 1
-                ) AS embedding ON true
                 WHERE task.run_id = %s
                   AND task.status IN ('pending', 'generating', 'validating')
                 ORDER BY task.priority DESC, task.id
@@ -750,7 +717,6 @@ class SelectorRepository:
                     generation_id=row[6],
                     validation_id=row[7],
                     sample_id=row[8],
-                    embedding_id=row[9],
                 ),
             )
             for row in rows

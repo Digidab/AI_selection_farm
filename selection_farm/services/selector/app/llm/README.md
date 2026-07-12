@@ -14,6 +14,7 @@ semantic duplicate policy, branch serialization, and the LLM entrypoint.
 - `modalities/` — declared input modality components.
 - `output_contracts/` — explicit result parsing contracts.
 - `evaluators/` — ordered LLM quality rules.
+- `persistence.py` — idempotent LLM-owned accepted-generation embedding persistence.
 - `exporter.py`, `main.py` — LLM serialization and entrypoint boundaries.
 
 ## Ownership
@@ -27,6 +28,8 @@ non-streaming, timeout-bound, and limited to two attempts for transient transpor
 Task 8 implements `structured_json`, `json_schema`, and `semantic_dedup` as explicit registered
 components. Evaluation is ordered cheap-to-expensive, embeds only schema-valid canonical JSON, and
 queries accepted samples in the same LLM dataset and embedding space.
+The runtime rejects an embedding response whose model identity differs from the requested model
+(allowing only the explicit `:latest` alias), and persistence records only that verified space.
 
 Task 11 implements the LLM serializer shape: prompt/input/schema, raw and structured completion,
 mandatory component profile, validation evidence, model identity, disposition, and provenance.

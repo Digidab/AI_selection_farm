@@ -48,7 +48,7 @@
 |---|---|
 | `dataset_id` | Текстовая метка, привязанная к имени файла версии (`golden_dataset_v001.jsonl`), не FK ни на какую таблицу — database_guide.md §9.2 и §5 (rule 5) прямо запрещают заводить под это отдельную сущность раньше времени |
 | `training_config_id` | Ссылается на файл в `configs/trainer/` (например `lora_train_v001.yaml`), не на таблицу |
-| `selector_version` | Ссылается на файл в `configs/selector/` (например `selector_v001.yaml`), не на таблицу |
+| `selector_version` | Ссылается на branch-owned config в `configs/selector/` (например `llm_v001.yaml` или `ml_v001.yaml`), не на таблицу |
 | Процессы (`PR`, было в старой версии справочника) | Дублирует `RU`/`farm.runs`, которая уже покрывает "одно исполнение Selector/Bereiter/Trainer" — самостоятельного смысла не несёт, удалено из справочника |
 
 ---

@@ -326,8 +326,8 @@ Status check (2026-07-07):
 Container        [running — name: selection_farm_postgres]
 Image used       [ankane/pgvector:latest — not pgvector/pgvector:pg16-trixie as listed above]
 Extension vector [installed — v0.5.1, CREATE EXTENSION applied manually]
-Tables/schema    [NOT defined yet — db/schema.sql and db/migrations/*.sql are still empty
-                  placeholder comments; no real tables exist in the database yet]
+Tables/schema    [applied and verified — schema farm, migrations 001-006,
+                  7 v001 tables and 31 indexes]
 ```
 
 Data volume (bind mount, not a named docker volume):
@@ -1058,7 +1058,7 @@ psutil 7.2.2             [installed]
 This is enough for:
 
 ```text
-tasks.jsonl
+branch-owned datasets/raw/llm|ml/tasks_v001.jsonl
 → Ollama
 → Python Selector
 → validation

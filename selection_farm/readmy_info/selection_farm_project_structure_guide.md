@@ -539,9 +539,13 @@ Stores raw input data and raw task files.
 
 ```text
 datasets/raw/
-├── tasks.jsonl
-├── source_data/
-└── README.md
+├── llm/
+│   ├── README.md
+│   └── tasks_v001.jsonl
+├── ml/
+│   ├── README.md
+│   └── tasks_v001.jsonl
+└── source_data/
 ```
 
 ### Rules
@@ -680,10 +684,14 @@ llm  ──────> core <────── ml
 
 `core` may not import either branch, and `llm`/`ml` may not import one another. Every new package
 directory has a local `README.md`; `tests/integration/test_selector_architecture.py` enforces the
-dependency boundary. The obsolete flat Selector modules are not a compatibility API.
+dependency boundary. The obsolete flat Selector modules, unified `selector_v001.yaml`, and unified
+raw `tasks.jsonl` are not compatibility APIs. Selector configuration and raw inputs are explicitly
+branch-owned.
 
 The LLM branch resolves the complete v001 component profile through an explicit allowlist before a
 run may be created. Its current reference composition is `single_turn` + `ollama` + `text`.
+LLM-owned `persistence.py` is the only Selector module that writes accepted generation embeddings;
+Core contains no embedding/vector persistence or EM-domain ID contract.
 Provider calls use httpx against non-streaming `/api/generate` and `/api/embed`; transport timeouts,
 two-attempt transient retry, typed responses, and exact finite 768-dimensional embeddings are
 enforced inside the LLM runtime without a database transaction or provider SDK.
@@ -841,7 +849,9 @@ define indexes
 ```text
 configs/
 ├── selector/
-│   └── selector_v001.yaml
+│   ├── common_v001.yaml
+│   ├── llm_v001.yaml
+│   └── ml_v001.yaml
 ├── bereiter/
 │   └── trial_config_v001.yaml
 ├── trainer/

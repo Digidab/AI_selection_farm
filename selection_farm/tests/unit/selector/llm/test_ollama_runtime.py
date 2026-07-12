@@ -90,6 +90,37 @@ def test_embed_rejects_non_v001_expected_dimension_before_transport() -> None:
     assert calls == 0
 
 
+def test_embed_fails_closed_on_model_identity_mismatch() -> None:
+    runtime = OllamaRuntimeAdapter(
+        "http://localhost:11434",
+        client=_client(
+            lambda request: httpx.Response(
+                200,
+                json={"model": "wrong-embed-model", "embeddings": [[0.0] * 768]},
+            )
+        ),
+    )
+
+    with pytest.raises(OllamaRuntimeError, match="model identity mismatch"):
+        runtime.embed(("one",), model="nomic-embed-text", expected_dimension=768)
+
+
+def test_embed_accepts_explicit_latest_alias_for_same_model() -> None:
+    runtime = OllamaRuntimeAdapter(
+        "http://localhost:11434",
+        client=_client(
+            lambda request: httpx.Response(
+                200,
+                json={"model": "nomic-embed-text:latest", "embeddings": [[0.0] * 768]},
+            )
+        ),
+    )
+
+    result = runtime.embed(("one",), model="nomic-embed-text", expected_dimension=768)
+
+    assert result.model == "nomic-embed-text:latest"
+
+
 @pytest.mark.parametrize(
     "vector, message",
     [

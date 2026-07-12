@@ -38,9 +38,6 @@ class FakeIDProvider:
     def issue_sample_id(self) -> str:
         return self._issue("sample")
 
-    def issue_embedding_id(self) -> str:
-        return self._issue("embedding")
-
 
 def _cleanup(db_connection, suffix: str) -> None:
     pattern = f"%{suffix}%"
@@ -180,22 +177,6 @@ def test_repository_lifecycle_resume_and_idempotence(db_connection) -> None:
             == sample.sample_id
         )
 
-        embedding = repository.create_embedding_once(
-            source_type="generation",
-            source_id=generation.generation_id,
-            model_id="tz08_task6_vector",
-            values=[1.0] + [0.0] * 767,
-        )
-        assert (
-            repository.create_embedding_once(
-                source_type="generation",
-                source_id=generation.generation_id,
-                model_id="ignored",
-                values=[0.0] * 768,
-            ).embedding_id
-            == embedding.embedding_id
-        )
-
         resume_item = repository.list_resume_items(run.run_id)[0]
         assert resume_stage(resume_item.evidence) is ResumeStage.COMPLETE
 
@@ -228,12 +209,11 @@ def test_repository_lifecycle_resume_and_idempotence(db_connection) -> None:
                     task.task_id,
                 ),
             )
-            assert cursor.fetchone() == (1, 1, 1, 1, "completed", "accepted")
+            assert cursor.fetchone() == (1, 1, 1, 0, "completed", "accepted")
         db_connection.commit()
         assert provider.counts["generation"] == 1
         assert provider.counts["validation"] == 1
         assert provider.counts["sample"] == 1
-        assert provider.counts["embedding"] == 1
         assert COUNTERS_FILE.read_bytes() == counters_before
     finally:
         _cleanup(db_connection, suffix)
