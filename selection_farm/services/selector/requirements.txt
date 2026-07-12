@@ -1,0 +1,14 @@
+httpx==0.28.1
+joblib==1.5.3
+jsonschema==4.26.0
+loguru==0.7.3
+orjson==3.11.9
+pgvector==0.5.0
+psycopg[binary]==3.3.4
+pydantic==2.13.4
+pydantic-settings==2.14.2
+python-dotenv==1.2.2
+PyYAML==6.0.3
+rich==15.0.0
+scikit-learn==1.9.0
+tenacity==9.1.4

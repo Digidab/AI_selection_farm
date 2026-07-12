@@ -1,0 +1,22 @@
+config_id: ml_v001
+branch: ml
+model_id: _tz08_ml_model_fixture
+dataset_id: selector_ml_seed_v001
+tasks_path: datasets/raw/ml/tasks_v001.jsonl
+artifact_path: stable/ml_models_stall/_tz08_fixture/model.joblib
+pipeline_id: sklearn_generic
+features:
+  - name: latency_ms
+    data_type: float
+  - name: error_count
+    data_type: integer
+  - name: is_cached
+    data_type: boolean
+prediction:
+  mode: classification
+  allowed_classes:
+    - healthy
+    - attention
+  confidence:
+    required: true
+    minimum: 0.6

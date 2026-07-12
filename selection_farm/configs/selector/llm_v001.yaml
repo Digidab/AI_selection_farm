@@ -1,0 +1,29 @@
+config_id: llm_v001
+branch: llm
+model_id: _tz08_llm_model_fixture
+dataset_id: selector_llm_seed_v001
+tasks_path: datasets/raw/llm/tasks_v001.jsonl
+components:
+  pipeline_id: single_turn
+  runtime_id: ollama
+  modalities:
+    - text
+  output_contract: structured_json
+  evaluators:
+    - json_schema
+    - semantic_dedup
+runtime:
+  endpoint_env: OLLAMA_HOST
+generation:
+  model: qwen3:0.6b
+  temperature: 0.0
+  seed: 42
+  max_output_tokens: 512
+embedding:
+  model: nomic-embed-text
+  dimension: 768
+output:
+  max_characters: 4096
+  max_json_depth: 16
+semantic_dedup:
+  max_cosine_distance: 0.05

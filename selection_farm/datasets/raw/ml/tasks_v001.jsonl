@@ -1,0 +1,2 @@
+{"task_id":"ml_seed_001","features":{"latency_ms":12.5,"error_count":0,"is_cached":true}}
+{"task_id":"ml_seed_002","features":{"latency_ms":47.25,"error_count":2,"is_cached":false}}

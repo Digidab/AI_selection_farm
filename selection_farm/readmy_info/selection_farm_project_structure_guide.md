@@ -665,31 +665,60 @@ It validates model outputs, rejects bad samples, accepts high-quality samples, a
 ```text
 services/selector/
 ├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── schemas.py
-│   ├── validators.py
-│   ├── ollama_client.py
-│   ├── embedding_client.py
-│   ├── dataset_writer.py
-│   ├── db.py
-│   └── logging_config.py
+│   ├── core/             # branch-neutral orchestration and infrastructure contracts
+│   ├── llm/              # LLM-only composition, validation, dedup, and export
+│   └── ml/               # ML-only inference, validation, dedup, and export
 ├── requirements.txt
 └── README.md
 ```
 
+Allowed dependency direction:
+
+```text
+llm  ──────> core <────── ml
+```
+
+`core` may not import either branch, and `llm`/`ml` may not import one another. Every new package
+directory has a local `README.md`; `tests/integration/test_selector_architecture.py` enforces the
+dependency boundary. The obsolete flat Selector modules are not a compatibility API.
+
+The LLM branch resolves the complete v001 component profile through an explicit allowlist before a
+run may be created. Its current reference composition is `single_turn` + `ollama` + `text`.
+Provider calls use httpx against non-streaming `/api/generate` and `/api/embed`; transport timeouts,
+two-attempt transient retry, typed responses, and exact finite 768-dimensional embeddings are
+enforced inside the LLM runtime without a database transaction or provider SDK.
+The v001 LLM result path uses a registered strict structured-JSON contract followed by Draft
+2020-12 schema validation and same-dataset accepted-sample pgvector deduplication. Invalid JSON or
+schema output never triggers embedding, and semantic distance at or below the configured threshold
+is rejected as a duplicate.
+The ML branch resolves only explicit registered `pipeline_id` values. Its v001 reference adapter
+loads trusted local `.joblib` estimators, prepares features in config order, requires `predict`, and
+uses `predict_proba` only when the classification confidence contract requires it. No model-family
+name inference or dispatch chain exists in the producer.
+ML decisions then pass explicit class/range/probability/confidence validation before exact input
+duplicate lookup. The canonical input is the strictly typed feature object with deterministic key
+order; accepted comparisons are limited to the same ML dataset and never use semantic distance.
+Committed DB samples are published through branch-owned LLM/ML serializers into four distinct
+accepted/rejected JSONL files. Core stages every payload before a rollback-capable atomic replace;
+generated datasets are never a parallel hand-maintained source of truth.
+The neutral Core pipeline receives one explicit assembled branch, checks the exact registered model
+type before creating a run, persists resumable checkpoints, and atomically accounts for terminal
+task outcomes. Separate CWD-independent LLM and ML scripts use the workspace venv; the common
+dispatcher requires `--branch llm` or `--branch ml` and performs no auto-detection.
+Task 13 verifies this assembly against live PostgreSQL with temporary LLM/ML registry rows, an
+injected LLM provider, and a pytest-owned joblib/sklearn artifact. Both branches persist isolated
+accepted evidence and distinct DB-first exports with exact counters; cleanup leaves zero `_tz08_`
+rows/files and does not touch production ID counters. Installed Ollama structured generation is
+healthy, while the absent approved embedding model keeps fully live LLM E2E explicitly
+inconclusive without pull or fallback.
+
 ### Responsibilities
 
 ```text
-generate candidates
-validate JSON
-validate schema
-validate numeric ranges
-reject invalid answers
-deduplicate via embeddings
-write golden samples
-write rejected samples
-store run metadata
+coordinate resumable DB-first evaluation through Core
+run LLM generation, structured validation, and semantic dedup in the LLM branch
+run typed estimator inference, ML validation, and exact dedup in the ML branch
+publish branch-owned golden and rejected exports from committed DB evidence
 ```
 
 ---
@@ -913,6 +942,8 @@ Scripts should be small, explicit, and safe.
 scripts/
 ├── create_project_tree.sh
 ├── run_selector.sh
+├── run_selector_llm.sh
+├── run_selector_ml.sh
 ├── run_bereiter.sh
 ├── run_trainer.sh
 ├── export_golden_dataset.sh
