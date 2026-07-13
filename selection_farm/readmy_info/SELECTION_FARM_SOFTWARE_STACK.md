@@ -809,6 +809,15 @@ mypy
 | `black` | Code formatting |
 | `mypy` | Static type checks |
 
+## Python formatting target
+
+The project runtime contract is CPython 3.13. Docker images use `python:3.13-slim`, while Black and
+Ruff explicitly target `py313` in `pyproject.toml`. The formatter target describes the grammar that
+generated code must support; it is not the Python version on which Black itself was released.
+
+Changing the interpreter of an existing virtual environment is unsupported: a future runtime
+upgrade requires a new virtual environment plus dependency, container, test, and migration checks.
+
 ## Required test areas
 
 ```text

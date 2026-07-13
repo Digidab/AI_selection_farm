@@ -68,7 +68,7 @@ def resolve_full_prefix(key: str) -> str:
 
 
 def _next_counter(value: int, width: int) -> tuple[str, int]:
-    while value >= 10 ** width:
+    while value >= 10**width:
         width += 1
     return f"{value:0{width}d}", width
 
