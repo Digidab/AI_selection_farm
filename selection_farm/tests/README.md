@@ -102,10 +102,14 @@ resolved settings.
 
 ## Implemented DB coverage
 
-- `db/schema.sql` body matches migrations `001-006` in exact order.
+- `db/schema.sql` body matches migrations `001-007` in exact order.
 - The configured PostgreSQL database is reachable.
 - pgvector is installed with the required `hnsw` and `vector_cosine_ops` capabilities.
-- The exact v001 catalog contains seven expected tables and 31 expected indexes.
+- The current catalog contains seven expected tables and 32 expected indexes.
+- `farm.tasks.source_id` is a dedicated indexed identity rather than a JSONB lookup;
+  `idx_tasks_run_source_id` enforces per-run uniqueness for non-null values.
+- Item-level failures persist the qualified exception type, message, and traceback, while the
+  raised aggregate `PipelineError` keeps the first exception as its explicit cause.
 - `idx_embeddings_embedding_hnsw` uses `vector_cosine_ops`.
 - A six-table runtime-core FK chain can be inserted, joined, and rolled back.
 - Two `vector(768)` embeddings can be inserted and queried with cosine distance; the exact query
@@ -148,12 +152,19 @@ resolved settings.
   injected replacement or serialization failure.
 - Task 12 pipeline tests execute independent fake LLM/ML accept and reject paths, resume both branch
   identities from persisted generations without repeated execution, reject the wrong registry model
-  type before creating a run, and expose/count partial failure. Script tests cover shell syntax,
+  type before creating a run, and expose/count partial failure with durable diagnostics. Script
+  tests cover shell syntax,
   explicit allowlisted dispatch, `BASH_SOURCE[0]`, workspace venv resolution, and arbitrary CWD.
 - Task 13 assembled live integration uses two temporary DB model rows, a protocol-compatible mocked
   LLM runtime with exact 768D evidence, and a pytest-owned joblib/sklearn artifact. Both branches
   complete with exact `total=processed=accepted=1` counters; LLM owns one embedding and ML owns
   none; four DB-first exports are branch-distinct and byte-stable; wrong model type creates no run.
+- Verified diagnostics hardening on 2026-07-13: migration `007_task_diagnostics.sql` is applied;
+  the live catalog has seven tables and 32 indexes; task source identity is column-owned and failure
+  evidence is durable. Selector unit + architecture passed `172/172`, full integration passed
+  `17/17`, and the combined matrix passed `185/185` with the same two upstream NumPy/joblib
+  deprecation warnings. Independent SQL cleanup returned zero `_tz08_` rows and production ID
+  counters were unchanged.
 - Verified after audit remediation on 2026-07-12: ambiguous unified config/raw paths are absent;
   embedding persistence and EM issuance are LLM-owned; provider model-identity mismatch fails
   closed; successful pipeline calls return refreshed completed run state. Selector unit +

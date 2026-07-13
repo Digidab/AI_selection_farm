@@ -326,8 +326,8 @@ Status check (2026-07-07):
 Container        [running — name: selection_farm_postgres]
 Image used       [ankane/pgvector:latest — not pgvector/pgvector:pg16-trixie as listed above]
 Extension vector [installed — v0.5.1, CREATE EXTENSION applied manually]
-Tables/schema    [applied and verified — schema farm, migrations 001-006,
-                  7 v001 tables and 31 indexes]
+Tables/schema    [applied and verified — schema farm, migrations 001-007,
+                  7 v001 tables and 32 indexes]
 ```
 
 Data volume (bind mount, not a named docker volume):

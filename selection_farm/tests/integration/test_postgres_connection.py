@@ -8,6 +8,7 @@ MIGRATION_NAMES = (
     "004_runtime_core.sql",
     "005_embeddings.sql",
     "006_indexes.sql",
+    "007_task_diagnostics.sql",
 )
 
 EXPECTED_TABLE_NAMES = frozenset(
@@ -41,6 +42,7 @@ EXPECTED_INDEX_NAMES = frozenset(
         "idx_samples_run_id",
         "idx_samples_status",
         "idx_tasks_run_id",
+        "idx_tasks_run_source_id",
         "idx_tasks_status",
         "idx_validation_results_failure_code",
         "idx_validation_results_generation_id",
@@ -105,6 +107,13 @@ def test_v001_catalog_contract(db_connection) -> None:
         actual_index_names = frozenset(row[0] for row in cursor.fetchall())
 
         cursor.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'farm' AND table_name = 'tasks'
+            """)
+        task_columns = frozenset(row[0] for row in cursor.fetchall())
+
+        cursor.execute("""
             SELECT indexdef
             FROM pg_indexes
             WHERE schemaname = 'farm'
@@ -112,8 +121,21 @@ def test_v001_catalog_contract(db_connection) -> None:
             """)
         hnsw_index = cursor.fetchone()
 
+        cursor.execute("""
+            SELECT indexdef
+            FROM pg_indexes
+            WHERE schemaname = 'farm'
+              AND indexname = 'idx_tasks_run_source_id'
+            """)
+        task_source_index = cursor.fetchone()
+
     assert actual_table_names == EXPECTED_TABLE_NAMES
     assert actual_index_names == EXPECTED_INDEX_NAMES
     assert hnsw_index is not None
     assert "USING hnsw" in hnsw_index[0]
     assert "vector_cosine_ops" in hnsw_index[0]
+    assert {"source_id", "error_type", "error_message", "error_traceback"} <= task_columns
+    assert task_source_index is not None
+    assert "UNIQUE" in task_source_index[0]
+    assert "(run_id, source_id)" in task_source_index[0]
+    assert "WHERE (source_id IS NOT NULL)" in task_source_index[0]

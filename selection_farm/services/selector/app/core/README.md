@@ -39,3 +39,9 @@ Task 13 live integration verifies exact model-type preflight, two isolated compl
 `1/1` processed/accepted counters, DB-first export, fake-provider ID isolation, and zero temporary
 rows after cleanup. Deterministic tests separately resume both branch identities without repeating
 execution and expose partial failure as a failed run.
+
+The post-TZ #08 diagnostics hardening moves durable task source identity into the dedicated
+`farm.tasks.source_id` column and uses the unique per-run partial index for idempotent import.
+Item-level exceptions are logged with run/task/source/branch correlation, persisted as qualified
+type, message, and traceback on the failed task, and chained as the cause of the aggregate
+`PipelineError`. LLM/ML entrypoints configure the common logging contract before execution.

@@ -6,7 +6,7 @@ import pytest
 
 from services.selector.app.core.db import RepositoryError, SelectorRepository
 from services.selector.app.core.pipeline import LifecycleError, ResumeStage, resume_stage
-from services.selector.app.core.schemas import RunStatus, TaskStatus
+from services.selector.app.core.schemas import RunStatus, TaskFailure, TaskStatus
 
 COUNTERS_FILE = Path(__file__).resolve().parents[2] / "configs" / "id_mapping" / "id_counters.json"
 
@@ -215,6 +215,89 @@ def test_repository_lifecycle_resume_and_idempotence(db_connection) -> None:
         assert provider.counts["validation"] == 1
         assert provider.counts["sample"] == 1
         assert COUNTERS_FILE.read_bytes() == counters_before
+    finally:
+        _cleanup(db_connection, suffix)
+
+    assert _owned_row_count(db_connection, suffix) == 0
+
+
+def test_task_source_identity_and_failure_diagnostics_are_durable(db_connection) -> None:
+    suffix = uuid4().hex
+    model_id = f"_tz08_model_{suffix}"
+    source_id = f"_tz08_source_{suffix}"
+    provider = FakeIDProvider(suffix)
+    repository = SelectorRepository(db_connection, provider)
+    _cleanup(db_connection, suffix)
+
+    try:
+        with db_connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO farm.model_registry (model_id, model_type, resource_class, status)
+                VALUES (%s, 'llm', '0.6b_1b', 'raw_candidate')
+                """,
+                (model_id,),
+            )
+        db_connection.commit()
+
+        run = repository.create_run(
+            model_id=model_id,
+            dataset_id=f"_tz08_dataset_{suffix}",
+            config_id="llm_v001",
+            total_items=1,
+        )
+        first = repository.create_task_once(
+            run_id=run.run_id,
+            source_id=source_id,
+            task_type="selector_llm",
+            input_payload={"value": 1},
+            metadata={"branch_id": "llm"},
+        )
+        second = repository.create_task_once(
+            run_id=run.run_id,
+            source_id=source_id,
+            task_type="selector_llm",
+            input_payload={"value": 999},
+            metadata={"branch_id": "llm"},
+        )
+
+        assert second.task_id == first.task_id
+        assert first.source_id == source_id
+        assert first.metadata == {"branch_id": "llm"}
+        assert provider.counts["task"] == 1
+
+        repository.transition_run(run.run_id, RunStatus.RUNNING)
+        failure = TaskFailure(
+            error_type="builtins.RuntimeError",
+            error_message="provider unavailable",
+            error_traceback="Traceback (most recent call last):\nRuntimeError: provider unavailable",
+        )
+        repository.fail_task_once(task_id=first.task_id, run_id=run.run_id, failure=failure)
+        repository.fail_task_once(task_id=first.task_id, run_id=run.run_id, failure=failure)
+
+        db_connection.rollback()
+        with db_connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT source_id, status, error_type, error_message, error_traceback,
+                       metadata, (metadata ? 'source_id')
+                FROM farm.tasks
+                WHERE task_id = %s
+                """,
+                (first.task_id,),
+            )
+            row = cursor.fetchone()
+        db_connection.commit()
+
+        assert row == (
+            source_id,
+            "failed",
+            failure.error_type,
+            failure.error_message,
+            failure.error_traceback,
+            {"branch_id": "llm"},
+            False,
+        )
     finally:
         _cleanup(db_connection, suffix)
 

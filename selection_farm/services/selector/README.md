@@ -36,3 +36,9 @@ accepted run, produce exact counters, and publish distinct byte-stable exports. 
 creates no run, ML creates no embedding row, and FK-safe cleanup leaves no `_tz08_` evidence.
 Installed Ollama `qwen3:0.6b` passes structured generation; live embedding remains explicitly
 inconclusive because `nomic-embed-text` is not installed and no pull/fallback is permitted.
+
+Post-audit diagnostics hardening stores source identity in the dedicated indexed
+`farm.tasks.source_id` column instead of JSONB metadata. Item failures now persist bounded exception
+type/message/traceback evidence, emit correlated logs, and remain chained to the aggregate pipeline
+error. The live migration `007` catalog is seven tables / 32 indexes, and the verified Selector
+matrix is `185/185`.

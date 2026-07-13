@@ -75,10 +75,20 @@ class RunRecord(_CoreRecord):
 class TaskRecord(_CoreRecord):
     task_id: NonEmptyString
     run_id: NonEmptyString
+    source_id: NonEmptyString | None = None
     task_type: NonEmptyString
     status: TaskStatus
     input_payload: dict[str, Any]
+    error_type: NonEmptyString | None = None
+    error_message: NonEmptyString | None = None
+    error_traceback: NonEmptyString | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class TaskFailure(_CoreRecord):
+    error_type: NonEmptyString
+    error_message: NonEmptyString
+    error_traceback: NonEmptyString
 
 
 class ResultRecord(_CoreRecord):

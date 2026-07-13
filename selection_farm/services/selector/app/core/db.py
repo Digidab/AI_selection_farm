@@ -10,7 +10,16 @@ import psycopg
 
 from .ids import IDProvider
 from .pipeline import EvidenceState, ensure_run_transition, ensure_task_transition
-from .schemas import CoreError, ErrorCode, RunCounters, RunRecord, RunStatus, TaskRecord, TaskStatus
+from .schemas import (
+    CoreError,
+    ErrorCode,
+    RunCounters,
+    RunRecord,
+    RunStatus,
+    TaskFailure,
+    TaskRecord,
+    TaskStatus,
+)
 
 
 class RepositoryError(CoreError):
@@ -259,41 +268,61 @@ class SelectorRepository:
         priority: int = 0,
         metadata: Mapping[str, Any] | None = None,
     ) -> TaskRecord:
+        normalized_source_id = source_id.strip()
+        if not normalized_source_id:
+            raise RepositoryError("source_id must not be empty")
+        if metadata is not None and "source_id" in metadata:
+            raise RepositoryError("source_id belongs in its dedicated task column")
         with self.transaction(), self.connection.cursor() as cursor:
-            self._lock(cursor, f"task:{run_id}:{source_id}")
+            self._lock(cursor, f"task:{run_id}:{normalized_source_id}")
             cursor.execute(
                 """
-                SELECT task_id, run_id, task_type, status, input_payload, metadata
+                SELECT task_id, run_id, source_id, task_type, status, input_payload,
+                       error_type, error_message, error_traceback, metadata
                 FROM farm.tasks
-                WHERE run_id = %s AND metadata ->> 'source_id' = %s
+                WHERE run_id = %s AND source_id = %s
                 ORDER BY id LIMIT 1
                 """,
-                (run_id, source_id),
+                (run_id, normalized_source_id),
             )
             row = cursor.fetchone()
             if row is not None:
                 return TaskRecord(
                     task_id=row[0],
                     run_id=row[1],
-                    task_type=row[2],
-                    status=TaskStatus(row[3]),
-                    input_payload=row[4],
-                    metadata=row[5],
+                    source_id=row[2],
+                    task_type=row[3],
+                    status=TaskStatus(row[4]),
+                    input_payload=row[5],
+                    error_type=row[6],
+                    error_message=row[7],
+                    error_traceback=row[8],
+                    metadata=row[9],
                 )
             task_id = self.id_provider.issue_task_id()
-            task_metadata = {**dict(metadata or {}), "source_id": source_id}
+            task_metadata = dict(metadata or {})
             cursor.execute(
                 """
                 INSERT INTO farm.tasks (
-                    task_id, run_id, task_type, input_payload, status, priority, metadata
+                    task_id, run_id, source_id, task_type, input_payload,
+                    status, priority, metadata
                 )
-                VALUES (%s, %s, %s, %s::jsonb, 'pending', %s, %s::jsonb)
+                VALUES (%s, %s, %s, %s, %s::jsonb, 'pending', %s, %s::jsonb)
                 """,
-                (task_id, run_id, task_type, _json(input_payload), priority, _json(task_metadata)),
+                (
+                    task_id,
+                    run_id,
+                    normalized_source_id,
+                    task_type,
+                    _json(input_payload),
+                    priority,
+                    _json(task_metadata),
+                ),
             )
         return TaskRecord(
             task_id=task_id,
             run_id=run_id,
+            source_id=normalized_source_id,
             task_type=task_type,
             status=TaskStatus.PENDING,
             input_payload=dict(input_payload),
@@ -652,7 +681,7 @@ class SelectorRepository:
             self._reconcile_run_counters(cursor, run_id)
         return SampleRecord(sample_id, generation_id, status)
 
-    def fail_task_once(self, *, task_id: str, run_id: str) -> None:
+    def fail_task_once(self, *, task_id: str, run_id: str, failure: TaskFailure) -> None:
         with self.transaction(), self.connection.cursor() as cursor:
             self._lock(cursor, f"fail:{task_id}")
             cursor.execute(
@@ -669,8 +698,21 @@ class SelectorRepository:
                 raise RepositoryError("Cannot fail a finalized task")
             ensure_task_transition(current, TaskStatus.FAILED)
             cursor.execute(
-                "UPDATE farm.tasks SET status = 'failed', updated_at = now() WHERE task_id = %s",
-                (task_id,),
+                """
+                UPDATE farm.tasks
+                SET status = 'failed',
+                    error_type = %s,
+                    error_message = %s,
+                    error_traceback = %s,
+                    updated_at = now()
+                WHERE task_id = %s
+                """,
+                (
+                    failure.error_type,
+                    failure.error_message,
+                    failure.error_traceback,
+                    task_id,
+                ),
             )
             self._reconcile_run_counters(cursor, run_id)
 
@@ -678,8 +720,9 @@ class SelectorRepository:
         with self.transaction(), self.connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT task.task_id, task.run_id, task.task_type, task.status,
-                       task.input_payload, task.metadata,
+                SELECT task.task_id, task.run_id, task.source_id, task.task_type,
+                       task.status, task.input_payload, task.error_type,
+                       task.error_message, task.error_traceback, task.metadata,
                        generation.generation_id, validation.validation_id,
                        sample.sample_id
                 FROM farm.tasks AS task
@@ -708,15 +751,19 @@ class SelectorRepository:
                 task=TaskRecord(
                     task_id=row[0],
                     run_id=row[1],
-                    task_type=row[2],
-                    status=TaskStatus(row[3]),
-                    input_payload=row[4],
-                    metadata=row[5],
+                    source_id=row[2],
+                    task_type=row[3],
+                    status=TaskStatus(row[4]),
+                    input_payload=row[5],
+                    error_type=row[6],
+                    error_message=row[7],
+                    error_traceback=row[8],
+                    metadata=row[9],
                 ),
                 evidence=EvidenceState(
-                    generation_id=row[6],
-                    validation_id=row[7],
-                    sample_id=row[8],
+                    generation_id=row[10],
+                    validation_id=row[11],
+                    sample_id=row[12],
                 ),
             )
             for row in rows

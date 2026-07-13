@@ -13,11 +13,11 @@ Infrastructure status (see `SELECTION_FARM_SOFTWARE_STACK.md` for details):
 
 ```text
 Postgres + pgvector : running (container selection_farm_postgres, bind mount db/postgres_volume/)
-Schema applied       : YES — migrations 001-006, 7 v001 tables and 31 indexes verified live
+Schema applied       : YES — migrations 001-007, 7 v001 tables and 32 indexes verified live
 ```
 
 This guide defines the implemented design represented by `db/schema.sql` and
-`db/migrations/001`–`006` (see §2). For an existing live database, apply only a new incremental
+`db/migrations/001`–`007` (see §2). For an existing live database, apply only a new incremental
 migration; do not reapply the full snapshot.
 
 ---
@@ -92,6 +92,8 @@ db/migrations/004_runtime_core.sql     → farm.runs, farm.tasks, farm.generatio
                                           farm.validation_results, farm.samples
 db/migrations/005_embeddings.sql       → farm.embeddings (depends on 002 for the vector type)
 db/migrations/006_indexes.sql          → all indexes from §7, including the HNSW index
+db/migrations/007_task_diagnostics.sql → dedicated task source identity, failure evidence,
+                                          and per-run source uniqueness
 db/schema.sql                          → full schema snapshot, kept in sync with migrations/
 ```
 
@@ -172,14 +174,18 @@ a disaster into a non-event.
 | `id` | bigserial PK | |
 | `task_id` | text, unique | |
 | `run_id` | text, FK → `runs.run_id` | |
+| `source_id` | text, nullable | durable branch source identity; unique within one run when present |
 | `task_type` | text | |
 | `prompt` | text | |
 | `input_payload` | jsonb | |
 | `expected_schema` | jsonb | what the Selector will validate the output against |
 | `status` | text | `pending`, `generating`, `generated`, `validating`, `accepted`, `rejected`, `failed`, `paused` |
 | `priority` | int, default 0 | |
+| `error_type` | text, nullable | qualified exception type for a failed task |
+| `error_message` | text, nullable | original bounded exception message |
+| `error_traceback` | text, nullable | bounded traceback captured at the item failure boundary |
 | `created_at`, `updated_at` | timestamptz | |
-| `metadata` | jsonb | |
+| `metadata` | jsonb | branch-neutral auxiliary facts; `source_id` must not be duplicated here |
 
 ### 4.4. `farm.generations`
 
@@ -332,6 +338,7 @@ CREATE INDEX ON farm.runs (started_at);
 
 CREATE INDEX ON farm.tasks (status);
 CREATE INDEX ON farm.tasks (run_id);
+CREATE UNIQUE INDEX ON farm.tasks (run_id, source_id) WHERE source_id IS NOT NULL;
 
 CREATE INDEX ON farm.generations (task_id);
 CREATE INDEX ON farm.generations (run_id);
@@ -440,7 +447,8 @@ independently.
 5.  all indexes from §7 exist
 6.  can insert a test row into farm.model_registry
 7.  can insert a test row into farm.runs referencing that model
-8.  can insert a test row into farm.tasks referencing that run
+8.  can insert a test row into farm.tasks referencing that run, with indexed source identity and
+    complete nullable failure evidence
 9.  can insert a test row into farm.generations referencing that task
 10. can insert a test row into farm.validation_results referencing that generation
 11. can insert a test row into farm.samples referencing that validation_result
@@ -467,7 +475,8 @@ gets queried or joined on, it belongs as a real column with an index, not buried
 ## 3. Migrations are additive
 
 Never edit an already-applied migration file. A schema change is a new file:
-`<next_number>_<description>.sql` (the next free number after §2's `006`). `db/schema.sql` is
+`<next_number>_<description>.sql` (the next free number after the latest migration in §2).
+`db/schema.sql` is
 then regenerated to match.
 
 ## 4. `generations` never carries a lifecycle status

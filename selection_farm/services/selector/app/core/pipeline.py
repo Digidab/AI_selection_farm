@@ -1,19 +1,27 @@
 """Branch-neutral lifecycle, orchestration, and resume handling."""
 
+import traceback
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol
 
+from .logging_config import correlation_context, get_logger
 from .schemas import (
     CoreError,
     DecisionStatus,
     ErrorCode,
     RunRecord,
     RunStatus,
+    TaskFailure,
     TaskRecord,
     TaskStatus,
 )
+
+_LOGGER = get_logger("pipeline")
+_MAX_ERROR_MESSAGE_LENGTH = 16_384
+_MAX_ERROR_TRACEBACK_LENGTH = 131_072
+_TRUNCATION_MARKER = "\n...[truncated]"
 
 RUN_TRANSITIONS = {
     RunStatus.CREATED: frozenset({RunStatus.RUNNING, RunStatus.FAILED}),
@@ -105,7 +113,23 @@ class PipelineRepository(Protocol):
 
     def finalize_task_once(self, **values: Any) -> Any: ...
 
-    def fail_task_once(self, *, task_id: str, run_id: str) -> None: ...
+    def fail_task_once(self, *, task_id: str, run_id: str, failure: TaskFailure) -> None: ...
+
+
+def _bounded_failure_text(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    return f"{value[: limit - len(_TRUNCATION_MARKER)]}{_TRUNCATION_MARKER}"
+
+
+def task_failure_from_exception(exc: Exception) -> TaskFailure:
+    message = str(exc).strip() or repr(exc)
+    traceback_text = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    return TaskFailure(
+        error_type=f"{type(exc).__module__}.{type(exc).__qualname__}",
+        error_message=_bounded_failure_text(message, _MAX_ERROR_MESSAGE_LENGTH),
+        error_traceback=_bounded_failure_text(traceback_text.strip(), _MAX_ERROR_TRACEBACK_LENGTH),
+    )
 
 
 class PipelineBranch(Protocol):
@@ -180,22 +204,45 @@ class SelectorPipeline:
                 source_id=source_id,
                 task_type=branch.task_type,
                 input_payload=payload,
-                metadata={"source_id": source_id, "branch_id": branch.branch_id},
+                metadata={"branch_id": branch.branch_id},
             )
         if run.status is RunStatus.CREATED:
             self.repository.transition_run(run.run_id, RunStatus.RUNNING)
 
-        failures = 0
+        failures: list[Exception] = []
         for item in self.repository.list_resume_items(run.run_id):
-            try:
-                self._process(branch, run, item.task, item.evidence)
-            except Exception:
-                failures += 1
-                self.repository.fail_task_once(task_id=item.task.task_id, run_id=run.run_id)
+            with correlation_context(run.run_id):
+                try:
+                    self._process(branch, run, item.task, item.evidence)
+                except Exception as exc:
+                    failure = task_failure_from_exception(exc)
+                    _LOGGER.exception(
+                        ("Selector task failed task_id=%s source_id=%s branch_id=%s error_type=%s"),
+                        item.task.task_id,
+                        item.task.source_id or "-",
+                        branch.branch_id,
+                        failure.error_type,
+                        extra={
+                            "event": "selector_task_failed",
+                            "run_id": run.run_id,
+                            "task_id": item.task.task_id,
+                            "source_id": item.task.source_id,
+                            "branch_id": branch.branch_id,
+                            "error_type": failure.error_type,
+                        },
+                    )
+                    failures.append(exc)
+                    self.repository.fail_task_once(
+                        task_id=item.task.task_id,
+                        run_id=run.run_id,
+                        failure=failure,
+                    )
 
         if failures:
             self.repository.transition_run(run.run_id, RunStatus.FAILED)
-            raise PipelineError(f"Selector run {run.run_id} failed for {failures} item(s)")
+            raise PipelineError(
+                f"Selector run {run.run_id} failed for {len(failures)} item(s)"
+            ) from failures[0]
         self.repository.transition_run(run.run_id, RunStatus.COMPLETED)
         return self.repository.load_run(run.run_id)
 

@@ -28,6 +28,17 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "correlation_id": getattr(record, "correlation_id", "-"),
         }
+        for field in (
+            "event",
+            "run_id",
+            "task_id",
+            "source_id",
+            "branch_id",
+            "error_type",
+        ):
+            value = getattr(record, field, None)
+            if value is not None:
+                payload[field] = value
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)
@@ -45,8 +56,7 @@ def configure_logging(settings: LoggingSettings) -> logging.Logger:
     else:
         handler.setFormatter(
             logging.Formatter(
-                "%(asctime)s %(levelname)s %(name)s "
-                "correlation_id=%(correlation_id)s %(message)s"
+                "%(asctime)s %(levelname)s %(name)s correlation_id=%(correlation_id)s %(message)s"
             )
         )
 

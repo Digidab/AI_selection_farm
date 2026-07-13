@@ -17,6 +17,7 @@ from services.selector.app.core.schemas import (
     RunCounters,
     RunRecord,
     RunStatus,
+    TaskFailure,
     TaskRecord,
     TaskStatus,
 )
@@ -34,6 +35,7 @@ class MemoryRepository:
         self.accepted = 0
         self.rejected = 0
         self.failed = 0
+        self.failures: dict[str, TaskFailure] = {}
         if resumable:
             self.run = self._run("run-resume", RunStatus.RUNNING, total=1)
 
@@ -71,6 +73,7 @@ class MemoryRepository:
             self.tasks[task_id] = TaskRecord(
                 task_id=task_id,
                 run_id=run_id,
+                source_id=source_id,
                 task_type=task_type,
                 status=TaskStatus.PENDING,
                 input_payload=dict(input_payload),
@@ -151,8 +154,16 @@ class MemoryRepository:
             }
         )
 
-    def fail_task_once(self, *, task_id: str, run_id: str) -> None:
-        self.tasks[task_id] = self.tasks[task_id].model_copy(update={"status": TaskStatus.FAILED})
+    def fail_task_once(self, *, task_id: str, run_id: str, failure: TaskFailure) -> None:
+        self.failures[task_id] = failure
+        self.tasks[task_id] = self.tasks[task_id].model_copy(
+            update={
+                "status": TaskStatus.FAILED,
+                "error_type": failure.error_type,
+                "error_message": failure.error_message,
+                "error_traceback": failure.error_traceback,
+            }
+        )
         self.failed += 1
 
 
@@ -218,7 +229,7 @@ def test_branches_resume_from_persisted_generation(branch_id: str) -> None:
         source_id="source",
         task_type="fixture",
         input_payload={"value": branch_id},
-        metadata={"source_id": "source"},
+        metadata={"branch_id": branch_id},
     )
     repository.transition_task(task.task_id, TaskStatus.GENERATING)
     repository.create_generation_once(
@@ -252,8 +263,14 @@ def test_wrong_model_type_fails_before_run_creation() -> None:
 def test_partial_failure_is_counted_and_run_is_not_reported_as_success() -> None:
     repository = MemoryRepository("ml")
 
-    with pytest.raises(PipelineError, match="failed for 1 item"):
+    with pytest.raises(PipelineError, match="failed for 1 item") as error:
         SelectorPipeline(repository).run(FakeBranch("ml", True, fail_execution=True))
 
     assert repository.failed == 1
     assert repository.run is not None and repository.run.status is RunStatus.FAILED
+    assert isinstance(error.value.__cause__, RuntimeError)
+    failure = repository.failures["task-source"]
+    assert failure.error_type == "builtins.RuntimeError"
+    assert failure.error_message == "fixture failure"
+    assert 'raise RuntimeError("fixture failure")' in failure.error_traceback
+    assert repository.tasks["task-source"].error_message == "fixture failure"

@@ -9,6 +9,7 @@ from typing import Any
 from ..core.db import GenerationRecord, SelectorRepository
 from ..core.export import connect_export_database
 from ..core.ids import ProductionIDProvider
+from ..core.logging_config import configure_logging
 from ..core.pipeline import ExecutionEvidence, SelectorPipeline
 from ..core.schemas import DecisionStatus, SelectionDecision, TaskRecord
 from .config import DEFAULT_LLM_CONFIG_PATH, LLMBranchSettings, load_llm_config
@@ -82,9 +83,9 @@ class LLMSelectorBranch:
 
     @staticmethod
     def _task(record: TaskRecord) -> LLMTask:
-        return LLMTask.model_validate(
-            {"task_id": record.metadata["source_id"], **record.input_payload}
-        )
+        if record.source_id is None:
+            raise ValueError("Selector LLM task is missing its durable source_id")
+        return LLMTask.model_validate({"task_id": record.source_id, **record.input_payload})
 
     def execute(self, task: TaskRecord) -> ExecutionEvidence:
         started = time.perf_counter()
@@ -191,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.common_config is None
         else load_llm_config(args.config, common_path=args.common_config)
     )
+    configure_logging(config.common.logging)
     connection = connect_export_database(config.common)
     try:
         branch = build_branch(config.llm, connection)

@@ -20,6 +20,8 @@ Full schema design, versioning strategy, and the database-vs-files ownership rul
   similarity search.
 - `migrations/006_indexes.sql` — 16 runtime-core B-tree indexes and one pgvector HNSW cosine
   index.
+- `migrations/007_task_diagnostics.sql` — durable task `source_id`, item-level error evidence, and
+  the unique per-run source identity index.
 
 ## Current Applied State
 
@@ -51,6 +53,13 @@ catalog, schema snapshot parity with migrations `001-006`, the runtime-core FK r
 `vector(768)` cosine behavior. Independent cleanup verification found zero `_tz07_` rows in all
 seven v001 tables.
 
+Maintenance migration #007 verdict: `passed`. On 2026-07-13, only the incremental
+`007_task_diagnostics.sql` migration was applied to the live container. `farm.tasks` now owns the
+dedicated nullable `source_id`, `error_type`, `error_message`, and `error_traceback` columns;
+`idx_tasks_run_source_id` enforces unique non-null source identity within a run. Backfill and
+metadata cleanup touched zero rows because the live baseline was empty. The current live catalog
+contains the same seven tables and 32 indexes, and targeted catalog/repository tests passed `6/6`.
+
 ## Agent Notes
 
 - Keep `schema.sql` synced with the exact concatenation of migrations after adding a new migration.
@@ -58,7 +67,8 @@ seven v001 tables.
 - Do not apply the full `schema.sql` to the existing live container; it is a fresh-environment
   snapshot and includes migrations that may already be applied.
 - `005_embeddings.sql` owns vector storage; `006_indexes.sql` owns the v001 secondary indexes,
-  including HNSW.
+  including HNSW; `007_task_diagnostics.sql` owns task source identity and failure diagnostics.
 - DB integration tests are implemented under `tests/integration/`; their commands, isolation
   contract, runtime verdict, and remaining placeholders are documented in `tests/README.md`.
-- Selector runtime logic and Model Lab remain future work; migration `006` implements indexes only.
+- Selector runtime is implemented; Model Lab remains future work. Do not reapply migration `007`
+  to a database where its task columns already exist.

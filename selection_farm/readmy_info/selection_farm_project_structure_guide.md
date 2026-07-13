@@ -713,6 +713,9 @@ The neutral Core pipeline receives one explicit assembled branch, checks the exa
 type before creating a run, persists resumable checkpoints, and atomically accounts for terminal
 task outcomes. Separate CWD-independent LLM and ML scripts use the workspace venv; the common
 dispatcher requires `--branch llm` or `--branch ml` and performs no auto-detection.
+Durable source identity is stored in `farm.tasks.source_id` behind a unique per-run partial index,
+not queried from JSONB metadata. A failed item persists its exception type, message, and traceback,
+emits correlated logs, and remains the explicit cause of the aggregate pipeline failure.
 Task 13 verifies this assembly against live PostgreSQL with temporary LLM/ML registry rows, an
 injected LLM provider, and a pytest-owned joblib/sklearn artifact. Both branches persist isolated
 accepted evidence and distinct DB-first exports with exact counters; cleanup leaves zero `_tz08_`
@@ -821,7 +824,11 @@ db/
 ├── migrations/
 │   ├── 001_init.sql
 │   ├── 002_add_pgvector.sql
-│   └── 003_model_registry.sql
+│   ├── 003_model_registry.sql
+│   ├── 004_runtime_core.sql
+│   ├── 005_embeddings.sql
+│   ├── 006_indexes.sql
+│   └── 007_task_diagnostics.sql
 └── README.md
 ```
 

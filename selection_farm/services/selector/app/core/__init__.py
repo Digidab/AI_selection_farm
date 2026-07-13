@@ -27,6 +27,7 @@ from .schemas import (
     RunRecord,
     RunStatus,
     SelectionDecision,
+    TaskFailure,
     TaskRecord,
     TaskStatus,
 )
@@ -55,6 +56,7 @@ __all__ = (
     "SelectorRepository",
     "SelectorBranch",
     "SelectorPipeline",
+    "TaskFailure",
     "TaskRecord",
     "TaskStatus",
     "configure_logging",

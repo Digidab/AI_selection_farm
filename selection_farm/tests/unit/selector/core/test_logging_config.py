@@ -30,11 +30,23 @@ def test_correlation_context_is_added_and_restored() -> None:
 def test_json_formatter_includes_correlation_id() -> None:
     record = _record()
     record.correlation_id = "TA_TEST"
+    record.event = "selector_task_failed"
+    record.run_id = "RU_TEST"
+    record.task_id = "TA_TEST"
+    record.source_id = "source-test"
+    record.branch_id = "llm"
+    record.error_type = "builtins.RuntimeError"
 
     payload = json.loads(JsonFormatter().format(record))
 
     assert payload["message"] == "message"
     assert payload["correlation_id"] == "TA_TEST"
+    assert payload["event"] == "selector_task_failed"
+    assert payload["run_id"] == "RU_TEST"
+    assert payload["task_id"] == "TA_TEST"
+    assert payload["source_id"] == "source-test"
+    assert payload["branch_id"] == "llm"
+    assert payload["error_type"] == "builtins.RuntimeError"
 
 
 def test_empty_correlation_id_is_rejected() -> None:

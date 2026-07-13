@@ -11,6 +11,7 @@ import orjson
 from ..core.db import GenerationRecord, SelectorRepository
 from ..core.export import connect_export_database
 from ..core.ids import ProductionIDProvider
+from ..core.logging_config import configure_logging
 from ..core.pipeline import ExecutionEvidence, SelectorPipeline
 from ..core.schemas import DecisionStatus, SelectionDecision, TaskRecord
 from .config import DEFAULT_ML_CONFIG_PATH, MLBranchSettings, load_ml_config
@@ -65,7 +66,9 @@ class MLSelectorBranch:
 
     @staticmethod
     def _task(record: TaskRecord) -> MLTask:
-        return MLTask(task_id=record.metadata["source_id"], features=record.input_payload)
+        if record.source_id is None:
+            raise ValueError("Selector ML task is missing its durable source_id")
+        return MLTask(task_id=record.source_id, features=record.input_payload)
 
     def execute(self, task: TaskRecord) -> ExecutionEvidence:
         started = time.perf_counter()
@@ -101,12 +104,14 @@ class MLSelectorBranch:
 
     @staticmethod
     def _prediction(task: TaskRecord, generation: GenerationRecord) -> MLPrediction:
+        if task.source_id is None:
+            raise ValueError("Selector ML task is missing its durable source_id")
         payload = generation.parsed_output
         if payload is None:
             raise ValueError("Persisted ML execution payload is missing")
         probabilities = payload["probabilities"]
         return MLPrediction(
-            task_id=task.metadata["source_id"],
+            task_id=task.source_id,
             mode=PredictionMode(payload["mode"]),
             prediction=payload["prediction"],
             probabilities=(
@@ -188,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.common_config is None
         else load_ml_config(args.config, common_path=args.common_config)
     )
+    configure_logging(config.common.logging)
     connection = connect_export_database(config.common)
     try:
         branch = build_branch(config.ml, connection)
